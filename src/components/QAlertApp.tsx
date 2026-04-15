@@ -460,7 +460,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                             ? <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1,7 6,12 17,1"/></svg>
                             : String(i + 1)
                           }
-                          {t.warning && !isCompleted && (
+                          {t.warning && (
                             <div style={{
                               position: 'absolute', top: '0px', right: '0px',
                               width: '10px', height: '10px', borderRadius: '50%',
