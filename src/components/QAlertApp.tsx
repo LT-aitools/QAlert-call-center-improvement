@@ -222,10 +222,14 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setComments('');
     setNotifPrefMet(false);
   }
+  const whoIncomplete  = !(formData.firstName?.trim() && formData.lastName?.trim() && notifPrefMet);
+  const whatIncomplete = !(selectedType && comments.trim());
+  const whereIncomplete = !selectedAddress;
+
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
-    { key: 'who',   label: 'Who' },
-    { key: 'what',  label: 'What (0)', warning: true },
-    { key: 'where', label: 'Where' },
+    { key: 'who',   label: 'Who',          warning: whoIncomplete },
+    { key: 'what',  label: 'What (0)',      warning: whatIncomplete },
+    { key: 'where', label: 'Where',         warning: whereIncomplete },
     { key: 'more',  label: 'Upload Files' },
     ...(!isNewTicket ? [{ key: 'history' as FormTab, label: 'Manage & History (0)', disabled: true }] : []),
   ];
