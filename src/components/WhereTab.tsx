@@ -142,6 +142,10 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   }
   const parsed = parseAddress(initialAddress ?? '');
   const hasSavedLocation = !!(initialAddress?.trim() && initialAddress !== 'N/A');
+  /** Street line only (no city) — use for map search when we have structured fields filled */
+  const initialStreetLine = hasSavedLocation
+    ? `${parsed.num} ${parsed.name}`.replace(/\s+/g, ' ').trim()
+    : '';
 
   const [city, setCity]                       = useState(parsed.city);
   const [streetNumber, setStreetNumber]       = useState(hasSavedLocation ? parsed.num : '');
@@ -157,7 +161,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   const [mapTypeOpen, setMapTypeOpen]         = useState(false);
   const [overlaysOpen, setOverlaysOpen]       = useState(false);
   const [activeOverlays, setActiveOverlays]   = useState<string[]>([]);
-  const [mapSearch, setMapSearch]             = useState(hasSavedLocation ? (initialAddress ?? '') : '');
+  const [mapSearch, setMapSearch]             = useState(initialStreetLine);
   const [pinDropped, setPinDropped]           = useState(false);
   const [pinPos, setPinPos]                   = useState({ x: 50, y: 50 });
   const [isDraggingPin, setIsDraggingPin]     = useState(false);
@@ -170,6 +174,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   const mapTypeRef  = useRef<HTMLDivElement>(null);
   const overlaysRef = useRef<HTMLDivElement>(null);
   const mapDivRef   = useRef<HTMLDivElement>(null);
+  const prevUseResidentRef = useRef(useResidentAddress);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -191,12 +196,15 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
       setUnitNumber(residentFormData.unit ?? '');
       if (residentFormData.city) setCity(residentFormData.city);
       onAddressChange?.(raw ? `${raw}, ${residentFormData.city ?? city}` : '');
-    } else if (!useResidentAddress) {
+      setMapSearch(raw ? `${num} ${name}`.replace(/\s+/g, ' ').trim() : '');
+    } else if (prevUseResidentRef.current && !useResidentAddress) {
+      // User unchecked "use resident" — clear manual fields only then (not on initial mount / loaded ticket)
       setStreetNumber('');
       setStreetName('');
       setUnitNumber('');
     }
-  }, [useResidentAddress]);
+    prevUseResidentRef.current = useResidentAddress;
+  }, [useResidentAddress, residentFormData]);
 
   function handleAddressSearch() {
     const mock = MOCK_LOOKUPS[streetNumber.trim()];
