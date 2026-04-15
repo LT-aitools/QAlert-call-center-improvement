@@ -15,7 +15,6 @@ const BORDER        = '1px solid #c8d0d8';
 const BORDER_LOCKED = '1px solid #d8dde3';
 const H1 = '17px';
 const H4 = '12px';
-const T2 = '15px'; // sub-headings → h2
 const T3 = '13px'; // field labels → h3
 const T4 = H4;     // body text → h4
 
@@ -115,6 +114,25 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
   const notif = formData.notificationPrefs ?? emptyNotif;
 
+  // Derived notification state
+  const textEnabled = notif.primaryText || notif.alternateText;
+  const textTarget  = notif.alternateText ? 'alternate' : 'primary';
+  const callEnabled = notif.primaryVoice || notif.alternateVoice;
+  const callTarget  = notif.alternateVoice ? 'alternate' : 'primary';
+
+  function setTextEnabled(on: boolean) {
+    onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryText: on, alternateText: false } });
+  }
+  function setTextTarget(target: 'primary' | 'alternate') {
+    onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryText: target === 'primary', alternateText: target === 'alternate' } });
+  }
+  function setCallEnabled(on: boolean) {
+    onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryVoice: on, alternateVoice: false } });
+  }
+  function setCallTarget(target: 'primary' | 'alternate') {
+    onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryVoice: target === 'primary', alternateVoice: target === 'alternate' } });
+  }
+
   return (
     <div style={{ fontSize: T4, padding: '8px 24px' }}>
 
@@ -122,11 +140,8 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
         Resident's Details
       </div>
 
-      {/* ═══ TOP SECTION: left = search+name, right = stats ═══ */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '6px' }}>
-
-        {/* Left */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+      {/* ═══ TOP SECTION: search + name ═══ */}
+      <div style={{ marginBottom: '6px' }}>
 
           <div style={{ fontSize: T3, fontWeight: 400, color: '#333', marginBottom: '4px' }}>Find Submitter</div>
 
@@ -189,32 +204,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
               <input type="text" disabled={isLocked} value={formData.lastName ?? ''} onChange={e => f('lastName', e.target.value)} placeholder="Last Name" style={inp()} />
             </div>
           </div>
-        </div>
-
-        {/* Submitter stats */}
-        <div style={{ width: '160px', flexShrink: 0 }}>
-          <div style={{ border: BORDER, borderRadius: '4px', backgroundColor: '#fff', padding: '8px 6px', fontSize: T4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', minHeight: '80px' }}>
-            <div style={{ fontWeight: 700, fontSize: T2, color: '#1a3a5c', marginBottom: '6px' }}>Submitter stats</div>
-            {submitter ? (() => {
-              const stats = getMockStats(submitter);
-              return (
-                <>
-                  <PieChart pct={stats.pct} />
-                  <div style={{ marginTop: '6px', color: '#444', lineHeight: '1.4', fontSize: T4 }}>
-                    <div>Last Contact:</div>
-                    <div>{stats.lastContact}</div>
-                  </div>
-                </>
-              );
-            })() : (
-              <div style={{ color: '#aaa', marginTop: '8px' }}>No stats to display</div>
-            )}
-          </div>
-        </div>
       </div>
-
-      {/* ═══ HORIZONTAL DIVIDER ═══ */}
-      <div style={{ borderTop: '1px solid #c8d0d8', marginBottom: '6px' }} />
 
       {/* ═══ BOTTOM SECTION ═══ */}
 
@@ -271,99 +261,64 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
       </div>
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
-      <div style={{ paddingTop: '6px', marginTop: '16px' }}>
-        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '4px', borderBottom: '1px solid #c8d0d8', paddingBottom: '4px' }}>Notification Preferences</div>
-        <table style={{ borderCollapse: 'collapse', fontSize: T4 }}>
-          <thead>
-            <tr>
-              <th style={{ fontWeight: 400, fontSize: T4, color: '#444', textAlign: 'left', paddingRight: '16px', paddingBottom: '2px' }}>Phone</th>
-              <th style={{ fontWeight: 400, fontSize: T4, color: '#444', textAlign: 'center', padding: '0 12px 2px', borderRight: '1px solid #888' }}>Voice</th>
-              <th style={{ fontWeight: 400, fontSize: T4, color: '#444', textAlign: 'center', padding: '0 12px 2px' }}>Text</th>
-              <th style={{ fontWeight: 400, fontSize: T4, color: '#444', textAlign: 'center', padding: '0 12px 2px' }}>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ fontSize: T4, color: '#555', paddingRight: '16px', paddingTop: '2px', paddingBottom: '2px' }}>Primary</td>
-              <td style={{ textAlign: 'center', padding: '2px 12px', borderRight: '1px solid #888' }}>
-                <input type="checkbox" disabled={isLocked} checked={notif.primaryVoice}   onChange={e => np('primaryVoice', e.target.checked)}   style={CB} />
-              </td>
-              <td style={{ textAlign: 'center', padding: '2px 12px' }}>
-                <input type="checkbox" disabled={isLocked} checked={notif.primaryText}    onChange={e => np('primaryText', e.target.checked)}    style={CB} />
-              </td>
-              <td style={{ textAlign: 'center', padding: '2px 12px' }}>
-                <input type="checkbox" disabled={isLocked} checked={notif.primaryEmail}   onChange={e => np('primaryEmail', e.target.checked)}   style={CB} />
-              </td>
-            </tr>
-            <tr>
-              <td style={{ fontSize: T4, color: '#555', paddingRight: '16px', paddingTop: '2px', paddingBottom: '2px' }}>Alternate</td>
-              <td style={{ textAlign: 'center', padding: '2px 12px', borderRight: '1px solid #888' }}>
-                <input type="checkbox" disabled={isLocked} checked={notif.alternateVoice} onChange={e => np('alternateVoice', e.target.checked)} style={CB} />
-              </td>
-              <td style={{ textAlign: 'center', padding: '2px 12px' }}>
-                <input type="checkbox" disabled={isLocked} checked={notif.alternateText}  onChange={e => np('alternateText', e.target.checked)}  style={CB} />
-              </td>
-              <td style={{ padding: '2px 12px' }} />
-            </tr>
-          </tbody>
-        </table>
+      <div style={{ marginTop: '16px', borderTop: '1px solid #c8d0d8', paddingTop: '12px' }}>
+        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '12px' }}>Notification Preferences</div>
+
+        {/* Email */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: isLocked ? 'default' : 'pointer' }}>
+          <input type="checkbox" disabled={isLocked} checked={notif.primaryEmail} onChange={e => np('primaryEmail', e.target.checked)} style={CB} />
+          <span style={{ fontSize: T3, color: '#222' }}>Email</span>
+          {formData.email && <span style={{ fontSize: T4, color: '#888' }}>{formData.email}</span>}
+        </label>
+
+        {/* Text message */}
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isLocked ? 'default' : 'pointer' }}>
+            <input type="checkbox" disabled={isLocked} checked={textEnabled} onChange={e => setTextEnabled(e.target.checked)} style={CB} />
+            <span style={{ fontSize: T3, color: '#222' }}>Text message</span>
+          </label>
+          {textEnabled && (
+            <div style={{ marginLeft: '26px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {(['primary', 'alternate'] as const).map(which => {
+                const num = which === 'primary' ? formData.phone : formData.altPhone;
+                return (
+                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (isLocked || (!num && which === 'alternate')) ? 'default' : 'pointer' }}>
+                    <input type="radio" disabled={isLocked || (!num && which === 'alternate')} checked={textTarget === which} onChange={() => setTextTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
+                    <span style={{ fontSize: T4, color: '#444', textTransform: 'capitalize' }}>{which}</span>
+                    <span style={{ fontSize: T4, color: num ? '#888' : '#bbb', fontStyle: num ? 'normal' : 'italic' }}>{num || 'no number on file'}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Phone call */}
+        <div style={{ marginBottom: '8px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isLocked ? 'default' : 'pointer' }}>
+            <input type="checkbox" disabled={isLocked} checked={callEnabled} onChange={e => setCallEnabled(e.target.checked)} style={CB} />
+            <span style={{ fontSize: T3, color: '#222' }}>Phone call</span>
+          </label>
+          {callEnabled && (
+            <div style={{ marginLeft: '26px', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {(['primary', 'alternate'] as const).map(which => {
+                const num = which === 'primary' ? formData.phone : formData.altPhone;
+                return (
+                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (isLocked || (!num && which === 'alternate')) ? 'default' : 'pointer' }}>
+                    <input type="radio" disabled={isLocked || (!num && which === 'alternate')} checked={callTarget === which} onChange={() => setCallTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
+                    <span style={{ fontSize: T4, color: '#444', textTransform: 'capitalize' }}>{which}</span>
+                    <span style={{ fontSize: T4, color: num ? '#888' : '#bbb', fontStyle: num ? 'normal' : 'italic' }}>{num || 'no number on file'}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-const MOCK_STATS = [
-  { pct: 100, lastContact: '4/12/2021 7:56 PM' },
-  { pct: 98,  lastContact: '2/26/2026 11:58 PM' },
-  { pct: 87,  lastContact: '3/3/2020 10:37 PM' },
-  { pct: 75,  lastContact: '1/15/2024 2:30 PM' },
-  { pct: 94,  lastContact: '8/7/2023 9:15 AM' },
-  { pct: 82,  lastContact: '11/30/2022 4:44 PM' },
-];
-
-function getMockStats(s: Submitter) {
-  return MOCK_STATS[parseInt(s.id, 10) % MOCK_STATS.length];
-}
-
-function PieChart({ pct }: { pct: number }) {
-  const cx = 40, cy = 40, r = 32;
-
-  // Full circle special case
-  if (pct >= 100) {
-    return (
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx={cx} cy={cy} r={r} fill="#1a3a5c" />
-        <text x={cx} y={cy - 6} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700">100%</text>
-        <text x={cx} y={cy + 9} textAnchor="middle" fill="#fff" fontSize="11">Closed</text>
-      </svg>
-    );
-  }
-
-  // Arc end point (clockwise from 12 o'clock)
-  const angle = (pct / 100) * 2 * Math.PI;
-  const ex = cx + r * Math.sin(angle);
-  const ey = cy - r * Math.cos(angle);
-  const large = pct > 50 ? 1 : 0;
-
-  // Grey background slice (open %)
-  const startX = cx;
-  const startY = cy - r;
-  // openAngle, ox, oy, openLarge kept for reference but grey slice drawn as full circle
-
-  return (
-    <svg width="80" height="80" viewBox="0 0 80 80">
-      {/* Grey background full circle */}
-      <circle cx={cx} cy={cy} r={r} fill="#d8dde4" />
-      {/* Navy closed arc */}
-      <path
-        d={`M ${cx} ${cy} L ${startX} ${startY} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)} Z`}
-        fill="#1a3a5c"
-      />
-      <text x={cx} y={cy - 6} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700">{pct}%</text>
-      <text x={cx} y={cy + 9} textAnchor="middle" fill="#fff" fontSize="11">Closed</text>
-    </svg>
-  );
-}
 
 function ImgBtn({ src, alt, onClick, dimmed }: {
   src: string; alt: string; onClick?: () => void; dimmed?: boolean;
