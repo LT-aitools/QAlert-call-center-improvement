@@ -118,7 +118,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   return (
     <div style={{ fontSize: T4, padding: '8px 24px' }}>
 
-      <div style={{ fontSize: H1, fontWeight: 700, color: '#1a3a5c', marginBottom: '12px' }}>
+      <div style={{ fontSize: H1, fontWeight: 700, color: '#1a3a5c', marginTop: '10px', marginBottom: '12px' }}>
         Resident's Details
       </div>
 
@@ -271,7 +271,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
       </div>
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
-      <div style={{ paddingTop: '6px', marginTop: '2px' }}>
+      <div style={{ paddingTop: '6px', marginTop: '16px' }}>
         <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '4px', borderBottom: '1px solid #c8d0d8', paddingBottom: '4px' }}>Notification Preferences</div>
         <table style={{ borderCollapse: 'collapse', fontSize: T4 }}>
           <thead>
