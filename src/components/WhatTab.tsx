@@ -107,8 +107,9 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
   const [commentsOpen, setCommentsOpen]       = useState(false);
   const [commentSearch, setCommentSearch]     = useState('');
 
-  const wrapperRef  = useRef<HTMLDivElement>(null);
-  const typeInputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef       = useRef<HTMLDivElement>(null);
+  const typeInputRef     = useRef<HTMLInputElement>(null);
+  const suppressFocusRef = useRef(true); // skip dropdown on programmatic auto-focus
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -125,6 +126,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
   useEffect(() => { typeInputRef.current?.focus(); }, []);
 
   function openDropdown() {
+    if (suppressFocusRef.current) { suppressFocusRef.current = false; return; }
     setDropdownOpen(true);
     setSearchQuery('');
     setHoverL1(null);
