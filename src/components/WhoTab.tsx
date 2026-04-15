@@ -251,7 +251,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
           <input type="text" disabled={isLocked} value={formData.zip ?? ''} onChange={e => f('zip', e.target.value)} placeholder="Postal Code" style={inp()} />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={LABEL}>All Phone</label>
+          <label style={LABEL}>Alt Phone</label>
           <input type="tel" disabled={isLocked} value={formData.altPhone ?? ''} onChange={e => f('altPhone', e.target.value)} placeholder="Alt Phone" style={inp()} />
         </div>
         <div style={{ width: '48px' }}>
