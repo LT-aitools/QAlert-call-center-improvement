@@ -230,7 +230,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
         {/* Address | Email */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
           <div style={{ flex: 1 }}>
-            <label style={LABEL}>Address</label>
+            <label style={LABEL}>Address <Req /></label>
             <input type="text" disabled={isLocked} value={formData.address ?? ''} onChange={e => f('address', e.target.value)} placeholder="# Street" style={inp()} />
           </div>
           <div style={{ flex: 1 }}>
