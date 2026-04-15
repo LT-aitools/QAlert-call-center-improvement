@@ -164,11 +164,14 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
   return (
     <div style={{ padding: '10px 24px', fontSize: T4 }}>
 
-      {/* ─── Type row ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-        <label style={{ fontSize: T3, fontWeight: 700, color: '#333', whiteSpace: 'nowrap', minWidth: '34px' }}>
-          Type
-        </label>
+      {/* ─── h1 heading ─── */}
+      <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginBottom: '14px' }}>
+        What's the issue or service request about?
+      </div>
+
+      {/* ─── Type section ─── */}
+      <div style={{ marginBottom: '4px' }}>
+        <div style={{ fontSize: '15px', fontWeight: 700, color: '#333', marginBottom: '6px' }}>Type <span style={{ color: '#c00', fontWeight: 700 }}>*</span></div>
 
         <div ref={wrapperRef} style={{ position: 'relative', width: '340px' }}>
           {/* Input */}
@@ -182,8 +185,8 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
               style={{
                 border: inputBorder,
                 borderRadius: '3px',
-                fontSize: T3,
-                padding: '5px 24px 5px 6px',
+                fontSize: '13px',
+                padding: '7px 28px 7px 8px',
                 width: '100%',
                 boxSizing: 'border-box',
                 outline: 'none',
@@ -287,7 +290,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
 
       {/* ─── Breadcrumb ─── */}
       {selectedType && (
-        <div style={{ paddingLeft: '42px', marginBottom: '10px' }}>
+        <div style={{ marginBottom: '10px' }}>
           <span style={{ fontSize: T4, color: '#666' }}>
             {breadcrumb.join(' > ')}
           </span>
@@ -302,7 +305,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
           {/* Invisible spacer — matches Prompts badge height so both columns stay aligned */}
           <div style={{ height: '18px', marginBottom: '2px', visibility: 'hidden' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-            <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>Comments</span>
+            <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span></span>
             <ChatBadge label="Comments" onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }} />
           </div>
           <textarea

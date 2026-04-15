@@ -48,8 +48,8 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Derived state
-  const noneSelected = !submitter;
-  const isLocked     = !!submitter && !isEditing; // submitter loaded but not in edit mode
+  const noSubmitter = !submitter;
+  const isLocked    = !!submitter && !isEditing; // submitter loaded but not in edit mode
 
   // Dynamic input style
   function inp(extra: React.CSSProperties = {}): React.CSSProperties {
@@ -118,10 +118,11 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const notif = formData.notificationPrefs ?? emptyNotif;
 
   // Derived notification state
-  const textEnabled = notif.primaryText || notif.alternateText;
-  const textTarget  = notif.alternateText ? 'alternate' : 'primary';
-  const callEnabled = notif.primaryVoice || notif.alternateVoice;
-  const callTarget  = notif.alternateVoice ? 'alternate' : 'primary';
+  const textEnabled  = notif.primaryText || notif.alternateText;
+  const textTarget   = notif.alternateText ? 'alternate' : 'primary';
+  const callEnabled  = notif.primaryVoice || notif.alternateVoice;
+  const callTarget   = notif.alternateVoice ? 'alternate' : 'primary';
+  const noneSelected = !notif.primaryEmail && !textEnabled && !callEnabled;
 
   function setTextEnabled(on: boolean) {
     onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryText: on, alternateText: false } });
@@ -168,9 +169,9 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
             </div>
 
             {/* Pencil — dimmed until a submitter is loaded */}
-            <ImgBtn src={`${BASE}icons/pencil.gif`} alt="Edit" onClick={handlePencilClick} dimmed={noneSelected} />
+            <ImgBtn src={`${BASE}icons/pencil.gif`} alt="Edit" onClick={handlePencilClick} dimmed={noSubmitter} />
             {/* X — dimmed until a submitter is loaded; triggers confirm dialog */}
-            <ImgBtn src={`${BASE}icons/cancel.gif`} alt="Clear" onClick={handleClearClick} dimmed={noneSelected} />
+            <ImgBtn src={`${BASE}icons/cancel.gif`} alt="Clear" onClick={handleClearClick} dimmed={noSubmitter} />
 
             {/* Dropdown */}
             {showDropdown && searchResults.length > 0 && (
@@ -206,7 +207,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
           {(!!submitter || showManualEntry) && (
             <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
               <div style={{ flex: 1 }}>
-                <label style={LABEL}>First Name</label>
+                <label style={LABEL}>First Name <Req /></label>
                 <input type="text" disabled={isLocked} value={formData.firstName ?? ''} onChange={e => f('firstName', e.target.value)} placeholder="First Name" style={inp()} />
               </div>
               <div style={{ width: '40px' }}>
@@ -214,7 +215,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
                 <input type="text" disabled={isLocked} value={formData.mi ?? ''} onChange={e => f('mi', e.target.value)} placeholder="MI" maxLength={1} style={inp()} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={LABEL}>Last Name</label>
+                <label style={LABEL}>Last Name <Req /></label>
                 <input type="text" disabled={isLocked} value={formData.lastName ?? ''} onChange={e => f('lastName', e.target.value)} placeholder="Last Name" style={inp()} />
               </div>
             </div>
@@ -279,19 +280,36 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
       <div style={{ marginTop: '16px', borderTop: '1px solid #c8d0d8', paddingTop: '12px' }}>
-        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '12px' }}>Notification Preferences</div>
+        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '12px' }}>
+          Notification Preferences <Req />
+        </div>
+
+        {/* None — auto-checked when nothing else is selected; checking it clears all */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={noneSelected}
+            onChange={() => {
+              if (!noneSelected) {
+                onFormDataChange({ ...formData, notificationPrefs: { ...emptyNotif } });
+              }
+            }}
+            style={CB}
+          />
+          <span style={{ fontSize: T3, color: '#888', fontStyle: 'italic' }}>None</span>
+        </label>
 
         {/* Email */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: isLocked ? 'default' : 'pointer' }}>
-          <input type="checkbox" disabled={isLocked} checked={notif.primaryEmail} onChange={e => np('primaryEmail', e.target.checked)} style={CB} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={notif.primaryEmail} onChange={e => np('primaryEmail', e.target.checked)} style={CB} />
           <span style={{ fontSize: T3, color: '#222' }}>Email</span>
           {formData.email && <span style={{ fontSize: T4, color: '#888' }}>{formData.email}</span>}
         </label>
 
         {/* Text message */}
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isLocked ? 'default' : 'pointer' }}>
-            <input type="checkbox" disabled={isLocked} checked={textEnabled} onChange={e => setTextEnabled(e.target.checked)} style={CB} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={textEnabled} onChange={e => setTextEnabled(e.target.checked)} style={CB} />
             <span style={{ fontSize: T3, color: '#222' }}>Text message</span>
           </label>
           {textEnabled && (
@@ -299,8 +317,8 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
               {(['primary', 'alternate'] as const).map(which => {
                 const num = which === 'primary' ? formData.phone : formData.altPhone;
                 return (
-                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (isLocked || (!num && which === 'alternate')) ? 'default' : 'pointer' }}>
-                    <input type="radio" disabled={isLocked || (!num && which === 'alternate')} checked={textTarget === which} onChange={() => setTextTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
+                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (!num && which === 'alternate') ? 'default' : 'pointer' }}>
+                    <input type="radio" disabled={!num && which === 'alternate'} checked={textTarget === which} onChange={() => setTextTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
                     <span style={{ fontSize: T4, color: '#444', textTransform: 'capitalize' }}>{which}</span>
                     <span style={{ fontSize: T4, color: num ? '#888' : '#bbb', fontStyle: num ? 'normal' : 'italic' }}>{num || 'no number on file'}</span>
                   </label>
@@ -312,8 +330,8 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
         {/* Phone call */}
         <div style={{ marginBottom: '8px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isLocked ? 'default' : 'pointer' }}>
-            <input type="checkbox" disabled={isLocked} checked={callEnabled} onChange={e => setCallEnabled(e.target.checked)} style={CB} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={callEnabled} onChange={e => setCallEnabled(e.target.checked)} style={CB} />
             <span style={{ fontSize: T3, color: '#222' }}>Phone call</span>
           </label>
           {callEnabled && (
@@ -321,8 +339,8 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
               {(['primary', 'alternate'] as const).map(which => {
                 const num = which === 'primary' ? formData.phone : formData.altPhone;
                 return (
-                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (isLocked || (!num && which === 'alternate')) ? 'default' : 'pointer' }}>
-                    <input type="radio" disabled={isLocked || (!num && which === 'alternate')} checked={callTarget === which} onChange={() => setCallTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
+                  <label key={which} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: (!num && which === 'alternate') ? 0.45 : 1, cursor: (!num && which === 'alternate') ? 'default' : 'pointer' }}>
+                    <input type="radio" disabled={!num && which === 'alternate'} checked={callTarget === which} onChange={() => setCallTarget(which)} style={{ accentColor: '#16a34a', cursor: 'pointer' }} />
                     <span style={{ fontSize: T4, color: '#444', textTransform: 'capitalize' }}>{which}</span>
                     <span style={{ fontSize: T4, color: num ? '#888' : '#bbb', fontStyle: num ? 'normal' : 'italic' }}>{num || 'no number on file'}</span>
                   </label>
@@ -336,6 +354,10 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   );
 }
 
+
+function Req() {
+  return <span style={{ color: '#c00', marginLeft: '2px', fontWeight: 700 }}>*</span>;
+}
 
 function ImgBtn({ src, alt, onClick, dimmed }: {
   src: string; alt: string; onClick?: () => void; dimmed?: boolean;
