@@ -192,6 +192,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   const [mapSearchResults, setMapSearchResults] = useState<AddressSuggestion[]>([]);
   const [mapSearchOpen, setMapSearchOpen]     = useState(false);
   const [mapSearchLoading, setMapSearchLoading] = useState(false);
+  const [mapSearchError, setMapSearchError]   = useState('');
   const [pinDropped, setPinDropped]           = useState(false);
   const [pinPos, setPinPos]                   = useState({ x: 50, y: 50 });
   const [isDraggingPin, setIsDraggingPin]     = useState(false);
@@ -258,7 +259,14 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
       ''
     ).toLowerCase();
     const display = row.display_name.toLowerCase();
-    return cityVal.includes('port st. lucie') || cityVal.includes('port st lucie') || display.includes('port st. lucie') || display.includes('port st lucie');
+    return (
+      cityVal.includes('port st. lucie') ||
+      cityVal.includes('port st lucie') ||
+      cityVal.includes('port saint lucie') ||
+      display.includes('port st. lucie') ||
+      display.includes('port st lucie') ||
+      display.includes('port saint lucie')
+    );
   }
 
   function toSuggestion(row: NominatimResult): AddressSuggestion | null {
@@ -305,35 +313,60 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
       setMapSearchResults([]);
       setMapSearchOpen(false);
       setMapSearchLoading(false);
+      setMapSearchError('');
       return;
     }
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       setMapSearchLoading(true);
+      setMapSearchError('');
       try {
-        const params = new URLSearchParams({
+        const primaryParams = new URLSearchParams({
           q: `${q}, Port St. Lucie, Florida`,
           format: 'jsonv2',
           addressdetails: '1',
           countrycodes: 'us',
-          limit: '8',
+          limit: '10',
         });
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+        const primaryResp = await fetch(`https://nominatim.openstreetmap.org/search?${primaryParams.toString()}`, {
           signal: controller.signal,
         });
-        if (!resp.ok) throw new Error(`Search failed: ${resp.status}`);
-        const rows = (await resp.json()) as NominatimResult[];
+        if (!primaryResp.ok) throw new Error(`Search failed: ${primaryResp.status}`);
+        const primaryRows = (await primaryResp.json()) as NominatimResult[];
+
+        // Fallback: broader query bounded around Port St. Lucie if primary returns nothing useful.
+        let rows = primaryRows;
+        if (primaryRows.length === 0) {
+          const fallbackParams = new URLSearchParams({
+            q,
+            format: 'jsonv2',
+            addressdetails: '1',
+            countrycodes: 'us',
+            limit: '15',
+            bounded: '1',
+            viewbox: '-80.47,27.39,-80.20,27.18',
+          });
+          const fallbackResp = await fetch(`https://nominatim.openstreetmap.org/search?${fallbackParams.toString()}`, {
+            signal: controller.signal,
+          });
+          if (fallbackResp.ok) {
+            rows = (await fallbackResp.json()) as NominatimResult[];
+          }
+        }
+
         const suggestions = rows
           .filter(isPortStLucieResult)
           .map(toSuggestion)
-          .filter((s): s is AddressSuggestion => s !== null);
+          .filter((s): s is AddressSuggestion => s !== null)
+          .slice(0, 8);
         setMapSearchResults(suggestions);
-        setMapSearchOpen(suggestions.length > 0);
+        setMapSearchOpen(suggestions.length > 0 || q.length >= 3);
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         setMapSearchResults([]);
-        setMapSearchOpen(false);
+        setMapSearchOpen(true);
+        setMapSearchError('Search is temporarily unavailable. Please try again.');
       } finally {
         setMapSearchLoading(false);
       }
@@ -443,6 +476,8 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 80, backgroundColor: '#fff', border: BORDER, boxShadow: '0 2px 8px rgba(0,0,0,0.16)', marginTop: '1px', maxHeight: '220px', overflowY: 'auto' }}>
                 {mapSearchLoading ? (
                   <div style={{ padding: '7px 10px', fontSize: T4, color: '#666' }}>Searching Port St. Lucie addresses…</div>
+                ) : mapSearchError ? (
+                  <div style={{ padding: '7px 10px', fontSize: T4, color: '#b91c1c' }}>{mapSearchError}</div>
                 ) : mapSearchResults.length === 0 ? (
                   <div style={{ padding: '7px 10px', fontSize: T4, color: '#999' }}>No matching Port St. Lucie addresses found.</div>
                 ) : (
