@@ -312,9 +312,9 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
       )}
 
       {/* ─── Comments ─── */}
-      <div>
+      <div style={{ marginTop: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-          <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#333' }}>
             Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span>
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -348,7 +348,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
       ) : (
         <div style={{ marginTop: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-            <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>Private Notes</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#333' }}>Private Notes</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button
                 onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }}
