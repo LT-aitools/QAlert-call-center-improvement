@@ -35,10 +35,15 @@ const TOOLBAR_BG = '#eaecef';   // lighter grey
 const SEP_COLOR  = '#b0bbc6';
 const GREY_LINE  = '1px solid #c8d0d8';
 
-// Font tiers
-const T1 = '15px'; // nav + toolbar labels
-const T2 = '14px'; // section headings (Notif Prefs, Related Info, Submitter Stats)
-const T4 = '11px'; // standard body text (table rows, pagination, filters)
+// Font hierarchy
+const H1 = '17px'; // major section headings
+const H2 = '15px'; // sub-headings, toolbar labels, tab labels
+const H3 = '13px'; // nav bar text, table column headers
+const H4 = '12px'; // standard body text
+// Aliases kept for backward compat with existing usages
+const T1 = H3;  // nav bar items → h3
+const T2 = H2;  // toolbar labels → h2
+const T4 = H4;  // body text → h4
 
 function formatDateTime(d: Date): string {
   const m = d.getMonth() + 1, day = d.getDate(), y = d.getFullYear();
@@ -238,7 +243,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           return (
             <button key={t} onClick={() => setMainTab(t)} style={{
               padding: '0 14px', height: '28px',
-              fontSize: T4, fontWeight: 700,
+              fontSize: H2, fontWeight: 700,
               backgroundColor: active ? NAV_BG : '#fff',
               color: active ? '#fff' : '#555',
               border: 'none',
@@ -313,7 +318,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           </div>}
 
           {/* ── Step progress bar ── */}
-          <div style={{ padding: '10px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
+          <div style={{ padding: '12px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
               {(() => {
                 const currentIdx = formTabs.findIndex(f => f.key === formTab);
@@ -338,11 +343,11 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: isDisabled ? 'default' : 'pointer', minWidth: '52px' }}
                       >
                         <div style={{
-                          width: '26px', height: '26px', borderRadius: '50%',
+                          width: '32px', height: '32px', borderRadius: '50%',
                           backgroundColor: circleBg,
                           border: `2px solid ${circleBorder}`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '11px', fontWeight: 700, color: numColor,
+                          fontSize: H3, fontWeight: 700, color: numColor,
                           boxSizing: 'border-box', position: 'relative', zIndex: 1,
                           outline: trainingTarget === t.key ? '2px solid #f59e0b' : undefined,
                           outlineOffset: '2px',
@@ -357,7 +362,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                           )}
                         </div>
                         <div style={{
-                          fontSize: '10px', marginTop: '4px', fontWeight: isActive ? 700 : 400,
+                          fontSize: H2, marginTop: '5px', fontWeight: isActive ? 700 : 400,
                           color: labelColor, whiteSpace: 'nowrap', textAlign: 'center',
                         }}>
                           {cleanLabel}
@@ -366,7 +371,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
                       {/* Connector line to next step */}
                       {!isLast && (
-                        <div style={{ flex: 1, height: '2px', marginTop: '11px', backgroundColor: lineColor }} />
+                        <div style={{ flex: 1, height: '2px', marginTop: '14px', backgroundColor: lineColor }} />
                       )}
                     </div>
                   );
@@ -375,7 +380,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             </div>
           </div>
 
-          <div style={{ height: '8px', backgroundColor: '#fff', flexShrink: 0 }} />
+          <div style={{ height: '18px', backgroundColor: '#fff', flexShrink: 0 }} />
 
           {/* Tab content — borderTop is the thin section-divider line below the white gap */}
           <div style={{ flex: 1, overflow: isNarrow ? 'visible' : 'auto', borderTop: GREY_LINE }}>
@@ -466,7 +471,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           <div style={{ flexShrink: 0, padding: '8px 10px 0 10px' }}>
             {/* Title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <span style={{ fontWeight: 700, fontSize: T2, color: '#222' }}>Related Information</span>
+              <span style={{ fontWeight: 700, fontSize: H1, color: '#222' }}>Related Information</span>
               <RefreshCwIcon size={13} style={{ color: '#2563eb', cursor: 'pointer' }} />
               <button
                 onClick={() => setRelatedCollapsed(true)}
@@ -476,11 +481,11 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             </div>
             {/* Tabs + filters row */}
             <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '3px solid #c8d0d8', paddingBottom: '0' }}>
-              <button onClick={() => setRelatedView('list')} style={{ fontSize: T4, fontWeight: relatedView === 'list' ? 700 : 400, color: relatedView === 'list' ? NAV_BG : '#888', background: 'none', border: 'none', borderBottom: relatedView === 'list' ? `3px solid ${NAV_BG}` : '3px solid transparent', marginBottom: '-3px', paddingBottom: '5px', paddingRight: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <button onClick={() => setRelatedView('list')} style={{ fontSize: H2, fontWeight: relatedView === 'list' ? 700 : 400, color: relatedView === 'list' ? NAV_BG : '#888', background: 'none', border: 'none', borderBottom: relatedView === 'list' ? `3px solid ${NAV_BG}` : '3px solid transparent', marginBottom: '-3px', paddingBottom: '5px', paddingRight: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Related Request List
               </button>
-              <span style={{ color: '#ccc', fontSize: T4, paddingBottom: '5px', paddingRight: '6px', marginBottom: '-3px' }}>|</span>
-              <button onClick={() => setRelatedView('map')} style={{ fontSize: T4, fontWeight: relatedView === 'map' ? 700 : 400, color: relatedView === 'map' ? NAV_BG : '#888', background: 'none', border: 'none', borderBottom: relatedView === 'map' ? `3px solid ${NAV_BG}` : '3px solid transparent', marginBottom: '-3px', paddingBottom: '5px', paddingRight: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <span style={{ color: '#ccc', fontSize: H2, paddingBottom: '5px', paddingRight: '6px', marginBottom: '-3px' }}>|</span>
+              <button onClick={() => setRelatedView('map')} style={{ fontSize: H2, fontWeight: relatedView === 'map' ? 700 : 400, color: relatedView === 'map' ? NAV_BG : '#888', background: 'none', border: 'none', borderBottom: relatedView === 'map' ? `3px solid ${NAV_BG}` : '3px solid transparent', marginBottom: '-3px', paddingBottom: '5px', paddingRight: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Map View
               </button>
               {/* Filters right-aligned */}
@@ -536,7 +541,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               <thead>
                 <tr style={{ backgroundColor: NAV_BG, position: isNarrow ? 'relative' : 'sticky', top: 0 }}>
                   {['ID','Priority','Address','Last Action','Request Type','Submitter','Created On','Routed To'].map(h => (
-                    <th key={h} style={{ color: '#fff', fontWeight: 600, fontSize: T4, padding: '5px 8px', textAlign: 'left', whiteSpace: 'nowrap', borderRight: '1px solid rgba(255,255,255,0.15)' }}>{h}</th>
+                    <th key={h} style={{ color: '#fff', fontWeight: 600, fontSize: H3, padding: '5px 8px', textAlign: 'left', whiteSpace: 'nowrap', borderRight: '1px solid rgba(255,255,255,0.15)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

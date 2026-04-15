@@ -13,9 +13,11 @@ const BASE = import.meta.env.BASE_URL;
 
 const BORDER        = '1px solid #c8d0d8';
 const BORDER_LOCKED = '1px solid #d8dde3';
-const T2 = '14px';
-const T3 = '12px'; // field labels
-const T4 = '11px'; // standard body text
+const H1 = '17px';
+const H4 = '12px';
+const T2 = '15px'; // sub-headings → h2
+const T3 = '13px'; // field labels → h3
+const T4 = H4;     // body text → h4
 
 const BASE_INPUT: React.CSSProperties = {
   border: BORDER, fontSize: T3, padding: '5px 6px',
@@ -115,6 +117,10 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
   return (
     <div style={{ fontSize: T4, padding: '8px 24px' }}>
+
+      <div style={{ fontSize: H1, fontWeight: 700, color: '#1a3a5c', marginBottom: '12px' }}>
+        Resident's Details
+      </div>
 
       {/* ═══ TOP SECTION: left = search+name, right = stats ═══ */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '6px' }}>
@@ -266,7 +272,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
       <div style={{ paddingTop: '6px', marginTop: '2px' }}>
-        <div style={{ fontSize: T2, fontWeight: 700, color: '#333', marginBottom: '4px', borderBottom: '1px solid #c8d0d8', paddingBottom: '4px' }}>Notification Preferences</div>
+        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '4px', borderBottom: '1px solid #c8d0d8', paddingBottom: '4px' }}>Notification Preferences</div>
         <table style={{ borderCollapse: 'collapse', fontSize: T4 }}>
           <thead>
             <tr>
