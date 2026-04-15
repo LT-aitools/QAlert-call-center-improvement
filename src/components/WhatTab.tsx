@@ -22,17 +22,6 @@ const PANEL_STYLE: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const ITEM_BASE: React.CSSProperties = {
-  padding: '4px 10px',
-  fontSize: T4,
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-  userSelect: 'none',
-};
-
 
 // ─── Reusable comments ────────────────────────────────────────────────────────
 const REUSABLE_COMMENTS = [
@@ -99,11 +88,10 @@ function getPromptText(selectedType: string): string {
 export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialComments }: { onTypeChange?: (t: string) => void; onCommentsChange?: (c: string) => void; initialType?: string; initialComments?: string } = {}) {
   const [selectedType, setSelectedType] = useState<string>(initialType ?? '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  /** When true, empty-query dropdown shows the cascading tree (opened only from "Browse all…"). */
+  /** When true, empty-query dropdown shows the browse tree (opened only from "Browse all…"). */
   const [browseOpen, setBrowseOpen]     = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
-  const [hoverL1, setHoverL1]           = useState<RTNode | null>(null);
-  const [hoverL2, setHoverL2]           = useState<RTNode | null>(null);
+  const [expandedByName, setExpandedByName] = useState<Record<string, boolean>>({});
   const [comments, setComments]               = useState(initialComments ?? '');
   const [privateNotes, setPrivateNotes]       = useState('');
   const [showPrivateNotes, setShowPrivateNotes] = useState(false);
@@ -133,8 +121,7 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
     setDropdownOpen(true);
     setBrowseOpen(true);
     setSearchQuery('');
-    setHoverL1(null);
-    setHoverL2(null);
+    setExpandedByName({});
   }
 
   function selectNode(name: string) {
@@ -143,8 +130,6 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
     setDropdownOpen(false);
     setBrowseOpen(false);
     setSearchQuery('');
-    setHoverL1(null);
-    setHoverL2(null);
   }
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,8 +137,10 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
     setSearchQuery(v);
     setBrowseOpen(false);
     setDropdownOpen(v.trim().length > 0);
-    setHoverL1(null);
-    setHoverL2(null);
+  }, []);
+
+  const toggleExpanded = useCallback((name: string) => {
+    setExpandedByName(prev => ({ ...prev, [name]: !prev[name] }));
   }, []);
 
   function insertComment(text: string) {
@@ -163,8 +150,6 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
 
   const isSearching  = searchQuery.trim().length > 0;
   const searchGroups = isSearching ? buildGroupedResults(searchQuery) : [];
-  const l2Items      = hoverL1?.children ?? [];
-  const l3Items      = hoverL2?.children ?? [];
 
   const inputBorder = selectedType || isSearching ? BORDER : BORDER_ERR;
 
@@ -249,52 +234,20 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
                   )}
                 </div>
               ) : (
-                /* ─── Cascading panels ─── */
-                <>
-                  <div style={PANEL_STYLE}>
-                    {REQUEST_TYPES.map(n => (
-                      <PanelItem
-                        key={n.name}
-                        node={n}
-                        isActive={hoverL1?.name === n.name}
-                        activeColor={SKY_DARK}
-                        hoverColor={SKY_BLUE}
-                        onHover={() => { setHoverL1(n); setHoverL2(null); }}
-                        onClick={() => selectNode(n.name)}
-                      />
-                    ))}
-                  </div>
-                  {hoverL1 && l2Items.length > 0 && (
-                    <div style={PANEL_STYLE}>
-                      {l2Items.map(n => (
-                        <PanelItem
-                          key={n.name}
-                          node={n}
-                          isActive={hoverL2?.name === n.name}
-                          activeColor={SKY_DARK}
-                          hoverColor={SKY_BLUE}
-                          onHover={() => setHoverL2(n)}
-                          onClick={() => selectNode(n.name)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {hoverL2 && l3Items.length > 0 && (
-                    <div style={PANEL_STYLE}>
-                      {l3Items.map(n => (
-                        <PanelItem
-                          key={n.name}
-                          node={n}
-                          isActive={false}
-                          activeColor={SKY_DARK}
-                          hoverColor={SKY_BLUE}
-                          onHover={() => {}}
-                          onClick={() => selectNode(n.name)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </>
+                /* ─── Indented browse tree ─── */
+                <div style={{ ...PANEL_STYLE, width: '460px' }}>
+                  {REQUEST_TYPES.map(node => (
+                    <BrowseTreeItem
+                      key={node.name}
+                      node={node}
+                      depth={0}
+                      selectedType={selectedType}
+                      expandedByName={expandedByName}
+                      onToggle={toggleExpanded}
+                      onSelect={selectNode}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
@@ -318,15 +271,12 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
                 padding: 0,
                 cursor: 'pointer',
                 fontSize: T4,
-                color: '#2563eb',
+                color: '#1a6fb5',
                 textDecoration: 'underline',
               }}
             >
               {dropdownOpen && browseOpen && !isSearching ? 'Close list' : 'Browse all request types'}
             </button>
-            <span style={{ fontSize: T4, color: '#888', marginLeft: '8px' }}>
-              Categories and sub-types
-            </span>
           </div>
         </div>
       </div>
@@ -530,20 +480,99 @@ function PromptBody({ text }: { text: string }) {
   );
 }
 
-function PanelItem({ node, isActive, activeColor, hoverColor, onHover, onClick }:{
-  node: RTNode; isActive: boolean; activeColor: string; hoverColor: string; onHover: () => void; onClick: () => void;
+function BrowseTreeItem({
+  node,
+  depth,
+  selectedType,
+  expandedByName,
+  onToggle,
+  onSelect,
+}: {
+  node: RTNode;
+  depth: number;
+  selectedType: string;
+  expandedByName: Record<string, boolean>;
+  onToggle: (name: string) => void;
+  onSelect: (name: string) => void;
 }) {
   const [hovered, setHovered] = useState(false);
-  const bg = isActive ? activeColor : hovered ? hoverColor : '#fff';
+  const hasChildren = node.children.length > 0;
+  const isExpanded = !!expandedByName[node.name];
+  const isSelected = selectedType === node.name;
+  const backgroundColor = isSelected ? SKY_DARK : hovered ? SKY_BLUE : '#fff';
+
+  function handleRowClick() {
+    if (hasChildren) {
+      onToggle(node.name);
+      return;
+    }
+    onSelect(node.name);
+  }
+
   return (
-    <div style={{ ...ITEM_BASE, backgroundColor: bg }}
-      onMouseEnter={() => { setHovered(true); onHover(); }}
+    <>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        fontSize: T4,
+        cursor: 'pointer',
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        backgroundColor,
+        padding: `4px 8px 4px ${8 + depth * 14}px`,
+        borderBottom: '1px solid #f0f0f0',
+      }}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={onClick}
+      onClick={handleRowClick}
     >
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name}</span>
-      {node.children.length > 0 && <span style={{ marginLeft: '6px', color: '#666', fontSize: '9px', flexShrink: 0 }}>▶</span>}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (hasChildren) onToggle(node.name);
+        }}
+        style={{
+          border: 'none',
+          background: 'none',
+          padding: 0,
+          width: '12px',
+          textAlign: 'center',
+          color: hasChildren ? '#555' : '#bbb',
+          fontSize: '9px',
+          cursor: hasChildren ? 'pointer' : 'default',
+          lineHeight: 1,
+          flexShrink: 0,
+        }}
+        aria-label={hasChildren ? (isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`) : undefined}
+      >
+        {hasChildren ? (isExpanded ? '▼' : '▶') : '•'}
+      </button>
+      <span
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          fontWeight: depth === 0 ? 700 : 400,
+        }}
+      >
+        {node.name}
+      </span>
     </div>
+    {hasChildren && isExpanded && node.children.map(child => (
+      <BrowseTreeItem
+        key={child.name}
+        node={child}
+        depth={depth + 1}
+        selectedType={selectedType}
+        expandedByName={expandedByName}
+        onToggle={onToggle}
+        onSelect={onSelect}
+      />
+    ))}
+    </>
   );
 }
 
