@@ -46,15 +46,29 @@ export function RequestSearchTab({ onOpenTicket }: Props) {
   const [resultView,  setResultView]  = useState<'list'|'map'>('list');
   const [statusFilter, setStatusFilter] = useState<string[]>(['Open','In Progress','Closed','On Hold']);
   const [statusOpen,  setStatusOpen]  = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; ticket: RelatedRequest } | null>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function h(e: MouseEvent) {
       if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+      setContextMenu(null);
     }
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+
+  function handleRowContextMenu(e: React.MouseEvent, ticket: RelatedRequest) {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, ticket });
+  }
+
+  function handleOpenInNewTab(ticket: RelatedRequest) {
+    const u = new URL(window.location.href);
+    u.searchParams.set('ticket', ticket.id);
+    window.open(u.toString(), '_blank', 'noopener,noreferrer');
+    setContextMenu(null);
+  }
 
   function handleSearch() {
     let filtered = mockSearchTickets;
@@ -256,6 +270,7 @@ export function RequestSearchTab({ onOpenTicket }: Props) {
                   <tr
                     key={r.id}
                     onClick={() => onOpenTicket(r)}
+                    onContextMenu={e => handleRowContextMenu(e, r)}
                     style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f7f9fb', borderBottom: '1px solid #c8d0d8', cursor: 'pointer' }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#e8f0f8')}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = i % 2 === 0 ? '#fff' : '#f7f9fb')}
@@ -298,6 +313,54 @@ export function RequestSearchTab({ onOpenTicket }: Props) {
           <span>Page 1 of {Math.max(1, Math.ceil(visibleResults.length / 25))}</span>
         </div>
       </div>
+
+      {/* Right-click menu for search result rows */}
+      {contextMenu && (
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 1100,
+            backgroundColor: '#fff',
+            border: BORDER,
+            borderRadius: '4px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+            minWidth: '180px',
+            padding: '4px 0',
+            fontSize: T3,
+          }}
+        >
+          <button
+            onClick={() => handleOpenInNewTab(contextMenu.ticket)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              width: '100%', padding: '8px 14px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: T3, color: '#222', textAlign: 'left',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#eef4fb')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <span style={{ fontSize: '13px' }}>↗</span> Open in new tab
+          </button>
+          <div style={{ borderTop: BORDER, margin: '4px 0' }} />
+          <button
+            onClick={() => { onOpenTicket(contextMenu.ticket); setContextMenu(null); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              width: '100%', padding: '8px 14px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: T3, color: '#222', textAlign: 'left',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#eef4fb')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <span style={{ fontSize: '13px' }}>↩</span> Open here
+          </button>
+        </div>
+      )}
     </div>
   );
 }
