@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCwIcon } from 'lucide-react';
+import { RefreshCwIcon, SendIcon } from 'lucide-react';
 import type { Submitter, RelatedRequest, FormTab } from '../types/qalert';
 import { mockTicketsBySubmitter, mockSubmitters, findTicketById, getTicketHistory } from '../data/mockData';
 import { WhoTab } from './WhoTab';
@@ -345,31 +345,30 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             >
               💾 Save Draft
             </button>
-            {draftToast && (
-              <span style={{ fontSize: T4, color: '#16a34a', fontWeight: 600, paddingLeft: '8px', whiteSpace: 'nowrap' }}>
-                ✓ Draft saved
-              </span>
-            )}
-            <div style={{ flex: 1 }} />
             <button
               onClick={canSubmit ? handleSubmit : undefined}
               title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '0 14px', height: '100%',
+                padding: '0 12px', height: '100%',
                 fontSize: T2, fontWeight: 600,
                 background: canSubmit ? '#1a7a4a' : 'transparent',
                 color: canSubmit ? '#fff' : '#aab',
                 border: 'none',
-                borderLeft: `1px solid ${SEP_COLOR}`,
+                borderRight: `1px solid ${SEP_COLOR}`,
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
                 whiteSpace: 'nowrap',
                 transition: 'background 0.15s',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
+              <SubmitPlaneIcon size={13} />
               Submit Request
             </button>
+            {draftToast && (
+              <span style={{ fontSize: T4, color: '#16a34a', fontWeight: 600, paddingLeft: '8px', whiteSpace: 'nowrap' }}>
+                ✓ Draft saved
+              </span>
+            )}
           </>
         ) : (
           /* ── Idle (no ticket open, nothing started) ── */
@@ -599,7 +598,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                   cursor: canSubmit ? 'pointer' : 'not-allowed',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
+              <SubmitPlaneIcon size={14} />
                 Submit Request
               </button>
             )}
@@ -621,7 +620,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
+              <SubmitPlaneIcon size={12} />
                 Submit Request
               </button>
             )}
@@ -979,4 +978,8 @@ function TBtn({ img, label, disabled = false, onClick, borderRight }: {
       <img src={`${BASE}icons/${img}`} alt="" style={{ height: '20px' }} /> {label}
     </button>
   );
+}
+
+function SubmitPlaneIcon({ size }: { size: number }) {
+  return <SendIcon size={size} strokeWidth={2.2} style={{ transform: 'rotate(-10deg)' }} />;
 }
