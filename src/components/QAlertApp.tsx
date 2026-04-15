@@ -360,57 +360,63 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           <div style={{ padding: '22px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
               {(() => {
+                const CIRCLE = 42;                   // px diameter
                 const currentIdx = formTabs.findIndex(f => f.key === formTab);
                 return formTabs.map((t, i) => {
                   const isLast      = i === formTabs.length - 1;
                   const isActive    = i === currentIdx;
                   const isCompleted = i < currentIdx;
                   const isDisabled  = !!t.disabled;
-                  const cleanLabel  = t.label.replace(/ \(\d+\)/g, '').replace('Manage & ', '');
+                  const cleanLabel  = t.label.replace(/ \(\d+\)/g, '').replace('Manage & ', '').toUpperCase();
 
-                  const circleBg    = (isActive || isCompleted) ? NAV_BG : '#fff';
-                  const circleBorder= isActive ? NAV_BG : isCompleted ? NAV_BG : isDisabled ? '#dde0e4' : '#c8d0d8';
-                  const numColor    = (isActive || isCompleted) ? '#fff' : isDisabled ? '#ccc' : '#aaa';
-                  const labelColor  = isActive ? NAV_BG : isCompleted ? '#555' : isDisabled ? '#ccc' : '#aaa';
-                  const lineColor   = isCompleted ? NAV_BG : '#e0e3e7';
+                  const circleBg     = (isActive || isCompleted) ? NAV_BG : '#fff';
+                  const circleBorder = (isActive || isCompleted) ? NAV_BG : isDisabled ? '#dde0e4' : '#c8d0d8';
+                  const numColor     = (isActive || isCompleted) ? '#fff' : isDisabled ? '#ccc' : '#b0b8c4';
+                  const labelColor   = isActive ? NAV_BG : isCompleted ? '#444' : isDisabled ? '#ccc' : '#b0b8c4';
+                  const lineColor    = isCompleted ? NAV_BG : '#dde0e4';
 
                   return (
                     <div key={t.key} style={{ display: 'flex', alignItems: 'flex-start', flex: isLast ? 0 : 1 }}>
                       {/* Circle + label */}
                       <div
                         onClick={() => !isDisabled && setFormTab(t.key)}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: isDisabled ? 'default' : 'pointer', minWidth: '52px' }}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: isDisabled ? 'default' : 'pointer', minWidth: '64px' }}
                       >
                         <div style={{
-                          width: '32px', height: '32px', borderRadius: '50%',
+                          width: `${CIRCLE}px`, height: `${CIRCLE}px`, borderRadius: '50%',
                           backgroundColor: circleBg,
                           border: `2px solid ${circleBorder}`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: H3, fontWeight: 700, color: numColor,
+                          fontSize: '16px', fontWeight: 700, color: numColor,
                           boxSizing: 'border-box', position: 'relative', zIndex: 1,
                           outline: trainingTarget === t.key ? '2px solid #f59e0b' : undefined,
-                          outlineOffset: '2px',
+                          outlineOffset: '3px',
+                          flexShrink: 0,
                         }}>
-                          {isCompleted ? '✓' : String(i + 1)}
+                          {isCompleted
+                            ? <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1,7 6,12 17,1"/></svg>
+                            : String(i + 1)
+                          }
                           {t.warning && !isCompleted && (
                             <div style={{
-                              position: 'absolute', top: '-2px', right: '-2px',
-                              width: '8px', height: '8px', borderRadius: '50%',
-                              backgroundColor: '#f59e0b', border: '1.5px solid #fff',
+                              position: 'absolute', top: '0px', right: '0px',
+                              width: '10px', height: '10px', borderRadius: '50%',
+                              backgroundColor: '#f59e0b', border: '2px solid #fff',
                             }} />
                           )}
                         </div>
                         <div style={{
-                          fontSize: H2, marginTop: '5px', fontWeight: isActive ? 700 : 400,
+                          fontSize: '11px', letterSpacing: '0.06em', marginTop: '7px',
+                          fontWeight: isActive ? 700 : 500,
                           color: labelColor, whiteSpace: 'nowrap', textAlign: 'center',
                         }}>
                           {cleanLabel}
                         </div>
                       </div>
 
-                      {/* Connector line to next step */}
+                      {/* Connector line — sits at circle centre */}
                       {!isLast && (
-                        <div style={{ flex: 1, height: '2px', marginTop: '14px', backgroundColor: lineColor }} />
+                        <div style={{ flex: 1, height: '2px', marginTop: `${CIRCLE / 2 - 1}px`, backgroundColor: lineColor }} />
                       )}
                     </div>
                   );
@@ -618,13 +624,13 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                         fontSize: '10px',
                         fontWeight: 600,
                         backgroundColor:
-                          r.status === 'Open'        ? '#fee2e2' :
+                          r.status === 'Open'        ? '#dcfce7' :
                           r.status === 'In Progress' ? '#dbeafe' :
-                          r.status === 'On Hold'     ? '#fef9c3' : '#f0f0f0',
+                          r.status === 'On Hold'     ? '#fee2e2' : '#f0f0f0',
                         color:
-                          r.status === 'Open'        ? '#b91c1c' :
+                          r.status === 'Open'        ? '#15803d' :
                           r.status === 'In Progress' ? '#1d4ed8' :
-                          r.status === 'On Hold'     ? '#92400e' : '#555',
+                          r.status === 'On Hold'     ? '#b91c1c' : '#555',
                       }}>
                         {r.status}
                       </span>
