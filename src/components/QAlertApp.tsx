@@ -1089,27 +1089,26 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.5 }}>
-              Choose what to do next:
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setCloseTicketWarningOpen(true)}
-                style={{ padding: '7px 14px', fontSize: T2, border: `1px solid #f59e0b`, borderRadius: '3px', background: '#fff7ed', color: '#9a3412', cursor: 'pointer', fontWeight: 600 }}
-              >
-                Immediately close ticket
-              </button>
-              <button
-                onClick={closeConfirmationAndOpenSameResidentTicket}
-                style={{ padding: '7px 14px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
-              >
-                Add another ticket for same resident
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
               <button
                 onClick={closeConfirmationAndOpenBlankTicket}
-                style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: NAV_BG, color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+                style={{ padding: '11px 34px', fontSize: '16px', border: 'none', borderRadius: '4px', background: NAV_BG, color: '#fff', cursor: 'pointer', fontWeight: 700, minWidth: '220px' }}
               >
-                OK
+                Got it
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
+              <button
+                onClick={closeConfirmationAndOpenSameResidentTicket}
+                style={{ padding: '7px 12px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                ✚ Add another ticket for same resident
+              </button>
+              <button
+                onClick={() => setCloseTicketWarningOpen(true)}
+                style={{ padding: '7px 12px', fontSize: T2, border: `1px solid #f59e0b`, borderRadius: '3px', background: '#fff7ed', color: '#9a3412', cursor: 'pointer', fontWeight: 600 }}
+              >
+                ✅ Immediately mark ticket as closed
               </button>
             </div>
           </div>

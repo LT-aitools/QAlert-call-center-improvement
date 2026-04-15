@@ -48,6 +48,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [notifNone, setNotifNone]         = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Derived state
   const noSubmitter = !submitter;
@@ -70,6 +71,10 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
     }
     document.addEventListener('mousedown', outside);
     return () => document.removeEventListener('mousedown', outside);
+  }, []);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
   }, []);
 
   function handleSearch(query: string) {
@@ -161,6 +166,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
           <div style={{ position: 'relative' }} ref={searchRef}>
             <div style={{ position: 'relative', display: 'inline-block', width: '460px' }}>
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
