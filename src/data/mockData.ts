@@ -1,4 +1,4 @@
-import type { Submitter, RelatedRequest, RequestType } from '../types/qalert';
+import type { Submitter, RelatedRequest, RequestType, TicketHistoryRow } from '../types/qalert';
 
 export const mockSubmitters: Submitter[] = [
   // Jane Doe variants — so searching "jane" or "doe" returns multiple
@@ -158,6 +158,7 @@ export const mockRelatedRequests: RelatedRequest[] = [
 
 // Full searchable ticket database for Request Search tab
 export const mockSearchTickets: RelatedRequest[] = [
+  { id: '114567', priority: 2, address: '96 SW Recyclable Way, Port St. Lucie',     lastAction: '6/7/2024 10:17P',  requestType: 'Solid Waste / Recycling', submitter: 'Jane Doe',        createdOn: '6/6/2024 3:29P',   routedTo: 'FCC Solid Waste',           status: 'Closed',      dept: 'Office of Solid Waste', origin: 'Control Panel', submitterId: '1'  },
   { id: '164677', priority: 1, address: '782 SW Deacon Dr, Port St. Lucie',        lastAction: '4/14/2026 9:17P',  requestType: 'Swale Rework',        submitter: 'Michael Brown',   createdOn: '4/14/2026 9:12P',  routedTo: 'TNorris',                   status: 'Open',        dept: 'Public Works',    origin: 'Call Center', submitterId: '10' },
   { id: '163969', priority: 1, address: '3341 NW Glorian Ave, Port St. Lucie',     lastAction: '4/12/2026 11:02A', requestType: 'Pothole',             submitter: 'Carlos Martinez', createdOn: '4/12/2026 10:58A', routedTo: 'August Wieser',             status: 'Open',        dept: 'Public Works',    origin: 'Online',      submitterId: '12' },
   { id: '164472', priority: 1, address: '509 SE Whitmore Dr, Port St. Lucie',      lastAction: '4/13/2026 2:30P',  requestType: 'Abandoned Vehicle',   submitter: 'Emily Davis',     createdOn: '4/13/2026 2:25P',  routedTo: 'AFeatherstone',             status: 'Open',        dept: 'Code Compliance', origin: 'Call Center', submitterId: '11' },
@@ -198,6 +199,26 @@ export function findTicketById(id: string): RelatedRequest | undefined {
     if (hit) return hit;
   }
   return undefined;
+}
+
+/** Audit trail rows keyed by request id (Manage & History tab). */
+export const mockTicketHistoryById: Record<string, TicketHistoryRow[]> = {
+  '114567': [
+    { activity: 'Created', date: '6/6/2024 3:29 PM', user: 'FCC Intake', comments: 'Service Request Open - ID 114567 Routed To: FCC Solid Waste... Comments: 96SW/REC' },
+    { activity: 'Activity entered', date: '6/6/2024 3:29 PM', user: 'jordanlee', comments: 'On schedule' },
+    { activity: 'Closed', date: '6/7/2024 10:17 PM', user: 'FCC Solid Waste', comments: 'SW/REC delivered 06/07/2024' },
+  ],
+};
+
+export function getTicketHistory(ticket: RelatedRequest): TicketHistoryRow[] {
+  const preset = mockTicketHistoryById[ticket.id];
+  if (preset?.length) return preset;
+  const closed = ticket.status === 'Closed';
+  return [
+    { activity: 'Created', date: ticket.createdOn, user: 'jordanlee', comments: `Service request opened — ID ${ticket.id}. Routed to: ${ticket.routedTo || '(queue)'}. Type: ${ticket.requestType}.` },
+    { activity: 'Activity entered', date: ticket.createdOn, user: 'jordanlee', comments: 'Reviewed and assigned.' },
+    { activity: closed ? 'Closed' : 'Updated', date: ticket.lastAction, user: 'jordanlee', comments: closed ? `Request closed — ${ticket.status}.` : `Status: ${ticket.status}.` },
+  ];
 }
 
 export const mockRequestTypes: RequestType[] = [

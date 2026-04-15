@@ -64,3 +64,11 @@ export interface RelatedRequest {
 }
 
 export type FormTab = 'who' | 'what' | 'where' | 'more' | 'history';
+
+/** One row in the Manage & History audit table for submitted tickets */
+export interface TicketHistoryRow {
+  activity: string;
+  date: string;
+  user: string;
+  comments: string;
+}

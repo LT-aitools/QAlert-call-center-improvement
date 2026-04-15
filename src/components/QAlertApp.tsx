@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { RefreshCwIcon } from 'lucide-react';
 import type { Submitter, RelatedRequest, FormTab } from '../types/qalert';
-import { mockTicketsBySubmitter, mockSubmitters, findTicketById } from '../data/mockData';
+import { mockTicketsBySubmitter, mockSubmitters, findTicketById, getTicketHistory } from '../data/mockData';
 import { WhoTab } from './WhoTab';
 import { WhatTab } from './WhatTab';
 import { WhereTab } from './WhereTab';
 import { FilesTab } from './FilesTab';
+import { HistoryTab } from './HistoryTab';
 import { RequestSearchTab } from './RequestSearchTab';
 
 interface QAlertAppProps {
@@ -246,12 +247,15 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const whatIncomplete = !(selectedType && comments.trim());
   const whereIncomplete = !selectedAddress;
 
+  const historyRows = activeTicket ? getTicketHistory(activeTicket) : [];
+  const historyCount  = historyRows.length;
+
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
     { key: 'who',   label: 'Who',          warning: whoIncomplete },
     { key: 'what',  label: 'What (0)',      warning: whatIncomplete },
     { key: 'where', label: 'Where',         warning: whereIncomplete },
     { key: 'more',  label: 'Upload Files' },
-    ...(!isNewTicket ? [{ key: 'history' as FormTab, label: 'Manage & History (0)', disabled: true }] : []),
+    ...(!isNewTicket ? [{ key: 'history' as FormTab, label: `Manage & History (${historyCount})`, disabled: false }] : []),
   ];
   const currentStepIdx = formTabs.findIndex(f => f.key === formTab);
   const nextStep = formTabs[currentStepIdx + 1];
@@ -568,7 +572,10 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               />
             )}
             {formTab === 'more' && <FilesTab />}
-            {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && (
+            {formTab === 'history' && activeTicket && (
+              <HistoryTab ticket={activeTicket} rows={historyRows} />
+            )}
+            {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && formTab !== 'history' && (
               <div style={{ padding: '14px', color: '#aaa', fontSize: T4 }}>
                 {formTabs.find(t => t.key === formTab)?.label} — coming soon
               </div>
@@ -577,8 +584,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
           {/* ── Footer: Next / Submit ── */}
           <div style={{ flexShrink: 0, borderTop: GREY_LINE, padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#fff', minHeight: '50px' }}>
-            {/* Step 4 (Upload Files) — no "Next", just Submit */}
-            {!nextStep && (
+            {/* Step 4 (Upload Files) — no "Next", just Submit (new tickets only; existing tickets end on History) */}
+            {!nextStep && isNewTicket && (
               <button
                 onClick={canSubmit ? handleSubmit : undefined}
                 title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
