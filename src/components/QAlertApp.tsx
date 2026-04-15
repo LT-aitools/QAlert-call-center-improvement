@@ -70,6 +70,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [savedSubmitter, setSavedSubmitter] = useState<Submitter | null>(null);
   const [savedFormData, setSavedFormData]   = useState<Partial<Submitter>>(EMPTY_FORM);
   const [activeTicket, setActiveTicket]     = useState<RelatedRequest | null>(null);
+  const [relatedCollapsed, setRelatedCollapsed] = useState(true);
 
   useEffect(() => {
     const handler = () => setIsNarrow(window.innerWidth <= 1350);
@@ -158,13 +159,21 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     }
   }, [savedSubmitter]);
 
+  // Auto-expand right panel when related requests arrive; collapse when cleared
+  useEffect(() => {
+    setRelatedCollapsed(relatedRequests.length === 0);
+  }, [relatedRequests.length]);
+
+  const isNewTicket = !activeTicket;
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
-    { key: 'who',     label: 'Who' },
-    { key: 'what',    label: 'What (0)', warning: true },
-    { key: 'where',   label: 'Where' },
-    { key: 'more',    label: 'More' },
-    { key: 'history', label: 'Manage & History (0)', disabled: true },
+    { key: 'who',   label: 'Who' },
+    { key: 'what',  label: 'What (0)', warning: true },
+    { key: 'where', label: 'Where' },
+    { key: 'more',  label: 'Upload Files' },
+    ...(!isNewTicket ? [{ key: 'history' as FormTab, label: 'Manage & History (0)', disabled: true }] : []),
   ];
+  const currentStepIdx = formTabs.findIndex(f => f.key === formTab);
+  const nextStep = formTabs[currentStepIdx + 1];
 
   return (
     <div style={{
@@ -380,18 +389,64 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               </div>
             )}
           </div>
+
+          {/* ── Next button footer ── */}
+          <div style={{ flexShrink: 0, borderTop: GREY_LINE, padding: '8px 24px', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#fff', minHeight: '42px' }}>
+            {nextStep && !nextStep.disabled && (
+              <button
+                onClick={() => setFormTab(nextStep.key)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '6px 18px', backgroundColor: NAV_BG, color: '#fff',
+                  border: 'none', borderRadius: '3px',
+                  fontSize: T2, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {nextStep.label.replace(/ \(\d+\)/g, '')} →
+              </button>
+            )}
+          </div>
         </div>}
 
         {/* ── Right: Related Information (details tab only) ── */}
         {mainTab === 'details' && <div style={{
-          width: isNarrow ? '680px' : '50%',
+          width: relatedCollapsed ? '32px' : (isNarrow ? '680px' : '50%'),
+          minWidth: relatedCollapsed ? '32px' : undefined,
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: '#fff',
-          overflow: 'hidden',   // outer clips vertically; table div handles both axes
+          overflow: 'hidden',
           marginTop: isNarrow ? '24px' : 0,
+          borderLeft: GREY_LINE,
+          transition: 'width 0.2s ease',
         }}>
+
+          {/* ── Collapsed strip ── */}
+          {relatedCollapsed && (
+            <div
+              onClick={() => setRelatedCollapsed(false)}
+              title="Show Related Information"
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'flex-start', paddingTop: '18px',
+                height: '100%', cursor: 'pointer', gap: '8px',
+                backgroundColor: '#f7f9fb', userSelect: 'none',
+              }}
+            >
+              <span style={{ fontSize: '13px', color: '#2563eb', lineHeight: 1 }}>›</span>
+              <span style={{
+                writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+                fontSize: '10px', color: '#888', letterSpacing: '0.05em',
+                fontWeight: 600, whiteSpace: 'nowrap',
+              }}>
+                Related Info
+              </span>
+            </div>
+          )}
+
+          {/* ── Expanded panel ── */}
+          {!relatedCollapsed && <>
 
           {/* Header: title + tabs+filters, then thick grey bottom border + white gap */}
           <div style={{ flexShrink: 0, padding: '8px 10px 0 10px' }}>
@@ -399,6 +454,11 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
               <span style={{ fontWeight: 700, fontSize: T2, color: '#222' }}>Related Information</span>
               <RefreshCwIcon size={13} style={{ color: '#2563eb', cursor: 'pointer' }} />
+              <button
+                onClick={() => setRelatedCollapsed(true)}
+                title="Collapse panel"
+                style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '14px', lineHeight: 1, padding: '0 2px' }}
+              >‹</button>
             </div>
             {/* Tabs + filters row */}
             <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '3px solid #c8d0d8', paddingBottom: '0' }}>
@@ -492,6 +552,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             </div>
             <span>Page 1 of 1</span>
           </div>
+
+          </>}
         </div>}
       </div>
 
