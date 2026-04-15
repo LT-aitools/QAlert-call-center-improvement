@@ -76,6 +76,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [savedFormData, setSavedFormData]   = useState<Partial<Submitter>>(EMPTY_FORM);
   const [activeTicket, setActiveTicket]     = useState<RelatedRequest | null>(null);
   const [relatedCollapsed, setRelatedCollapsed] = useState(true);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [draftToast, setDraftToast]             = useState(false);
 
   useEffect(() => {
     const handler = () => setIsNarrow(window.innerWidth <= 1350);
@@ -169,6 +171,21 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setRelatedCollapsed(relatedRequests.length === 0);
   }, [relatedRequests.length]);
 
+  function resetForm() {
+    setFormData(EMPTY_FORM);
+    setSubmitter(null);
+    setFormTab('who');
+    setSelectedType('');
+    setSelectedAddress('');
+    setActiveTicket(null);
+  }
+
+  function handleSaveDraft() {
+    setDraftToast(true);
+    setTimeout(() => setDraftToast(false), 2500);
+  }
+
+  const isInProgress = submitter !== null || selectedType !== '' || formTab !== 'who';
   const isNewTicket = !activeTicket;
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
     { key: 'who',   label: 'Who' },
@@ -217,12 +234,34 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
       {/* ── Toolbar — lighter bg, taller, T3 text, charcoal color ── */}
       <div style={{ backgroundColor: TOOLBAR_BG, height: '36px', display: 'flex', alignItems: 'center', flexShrink: 0, borderBottom: GREY_LINE }}>
-        <button
-          onClick={() => { setFormData(EMPTY_FORM); setSubmitter(null); setFormTab('who'); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#333', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
-        >
-          <img src={`${BASE}icons/add-new-request.gif`} alt="+" style={{ height: '20px' }} /> New Request
-        </button>
+        {isInProgress ? (
+          <>
+            <button
+              onClick={() => setCancelDialogOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#b91c1c', background: 'none', border: 'none', borderRight: `1px solid ${SEP_COLOR}`, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}
+            >
+              ✕ Cancel
+            </button>
+            <button
+              onClick={handleSaveDraft}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#444', background: 'none', border: 'none', borderRight: `1px solid ${SEP_COLOR}`, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              💾 Save Draft
+            </button>
+            {draftToast && (
+              <span style={{ fontSize: T4, color: '#16a34a', fontWeight: 600, paddingLeft: '8px', whiteSpace: 'nowrap' }}>
+                ✓ Draft saved
+              </span>
+            )}
+          </>
+        ) : (
+          <button
+            onClick={resetForm}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#333', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            <img src={`${BASE}icons/add-new-request.gif`} alt="+" style={{ height: '20px' }} /> New Request
+          </button>
+        )}
         {!isNewTicket && <>
           <TBtn img="save.png"        label="Save"          onClick={handleSave}      disabled={!selectedType} />
           <TBtn img="save-close.png"  label="Save + Close"  onClick={handleSaveClose}  disabled={!selectedType} />
@@ -476,8 +515,15 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               <button
                 onClick={() => setRelatedCollapsed(true)}
                 title="Collapse panel"
-                style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '14px', lineHeight: 1, padding: '0 2px' }}
-              >‹</button>
+                style={{
+                  marginLeft: 'auto', cursor: 'pointer',
+                  background: '#f0f2f4', border: '1px solid #c8d0d8', borderRadius: '4px',
+                  color: '#555', fontSize: '11px', lineHeight: 1,
+                  padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '3px',
+                }}
+              >
+                <span style={{ fontSize: '13px', lineHeight: 1 }}>‹</span> Collapse
+              </button>
             </div>
             {/* Tabs + filters row */}
             <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '3px solid #c8d0d8', paddingBottom: '0' }}>
@@ -577,6 +623,43 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
       </div>
 
       {freePanel && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50 }}>{freePanel}</div>}
+
+      {/* ── Cancel confirmation dialog ── */}
+      {cancelDialogOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            width: '420px',
+            padding: '28px 28px 20px',
+            display: 'flex', flexDirection: 'column', gap: '16px',
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>Cancel this ticket?</div>
+            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.6 }}>
+              Do you want to cancel adding this ticket? This information will not be saved, and no request will be added.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <button
+                onClick={() => setCancelDialogOpen(false)}
+                style={{ padding: '7px 20px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Keep editing
+              </button>
+              <button
+                onClick={() => { setCancelDialogOpen(false); resetForm(); }}
+                style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: '#b91c1c', color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Yes, cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
