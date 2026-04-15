@@ -296,7 +296,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
         <div style={{ fontSize: H1, fontWeight: 700, color: '#1a3a5c', marginBottom: '6px' }}>
           Notification Preferences <Req />
         </div>
-        <div style={{ fontSize: T3, color: '#333', marginBottom: '12px' }}>
+        <div style={{ fontSize: H2, color: '#333', marginBottom: '12px' }}>
           How would the resident like to receive updates?
         </div>
 
