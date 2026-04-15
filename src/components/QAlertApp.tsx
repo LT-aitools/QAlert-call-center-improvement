@@ -292,42 +292,70 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             </div>
           </div>
 
-          {/* Form tabs — aligned to left padding; NO container border (tabs have their own thick underlines, stops at last tab) */}
-          <div style={{ display: 'flex', flexShrink: 0, backgroundColor: '#fff', paddingLeft: '16px' }}>
-            {formTabs.map((t) => {
-              const active = formTab === t.key && !t.disabled;
-              const bgColor   = t.disabled ? '#e8eaed' : '#fff';
-              const textColor = t.disabled ? '#999' : active ? NAV_BG : '#888';
-              const bottomBorder = active
-                ? `3px solid ${NAV_BG}`
-                : '3px solid #c8d0d8';
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => !t.disabled && setFormTab(t.key)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '3px',
-                    padding: '0 12px', height: '28px', fontSize: T4,
-                    fontWeight: 600,
-                    color: textColor,
-                    backgroundColor: bgColor,
-                    border: 'none',
-                    borderBottom: bottomBorder,
-                    borderRight: t.disabled ? GREY_LINE : undefined,
-                    cursor: t.disabled ? 'default' : 'pointer',
-                    whiteSpace: 'nowrap',
-                    outline: trainingTarget === t.key ? '2px solid #f59e0b' : undefined,
-                  }}
-                >
-                  {t.label}
-                  {t.warning && <img src={`${BASE}icons/warning.gif`} alt="!" style={{ height: '12px', marginLeft: '2px' }} />}
-                </button>
-              );
-            })}
+          {/* ── Step progress bar ── */}
+          <div style={{ padding: '10px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
+              {(() => {
+                const currentIdx = formTabs.findIndex(f => f.key === formTab);
+                return formTabs.map((t, i) => {
+                  const isLast      = i === formTabs.length - 1;
+                  const isActive    = i === currentIdx;
+                  const isCompleted = i < currentIdx;
+                  const isDisabled  = !!t.disabled;
+                  const cleanLabel  = t.label.replace(/ \(\d+\)/g, '').replace('Manage & ', '');
+
+                  const circleBg    = (isActive || isCompleted) ? NAV_BG : '#fff';
+                  const circleBorder= isActive ? NAV_BG : isCompleted ? NAV_BG : isDisabled ? '#dde0e4' : '#c8d0d8';
+                  const numColor    = (isActive || isCompleted) ? '#fff' : isDisabled ? '#ccc' : '#aaa';
+                  const labelColor  = isActive ? NAV_BG : isCompleted ? '#555' : isDisabled ? '#ccc' : '#aaa';
+                  const lineColor   = isCompleted ? NAV_BG : '#e0e3e7';
+
+                  return (
+                    <div key={t.key} style={{ display: 'flex', alignItems: 'flex-start', flex: isLast ? 0 : 1 }}>
+                      {/* Circle + label */}
+                      <div
+                        onClick={() => !isDisabled && setFormTab(t.key)}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: isDisabled ? 'default' : 'pointer', minWidth: '52px' }}
+                      >
+                        <div style={{
+                          width: '26px', height: '26px', borderRadius: '50%',
+                          backgroundColor: circleBg,
+                          border: `2px solid ${circleBorder}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', fontWeight: 700, color: numColor,
+                          boxSizing: 'border-box', position: 'relative', zIndex: 1,
+                          outline: trainingTarget === t.key ? '2px solid #f59e0b' : undefined,
+                          outlineOffset: '2px',
+                        }}>
+                          {isCompleted ? '✓' : String(i + 1)}
+                          {t.warning && !isCompleted && (
+                            <div style={{
+                              position: 'absolute', top: '-2px', right: '-2px',
+                              width: '8px', height: '8px', borderRadius: '50%',
+                              backgroundColor: '#f59e0b', border: '1.5px solid #fff',
+                            }} />
+                          )}
+                        </div>
+                        <div style={{
+                          fontSize: '10px', marginTop: '4px', fontWeight: isActive ? 700 : 400,
+                          color: labelColor, whiteSpace: 'nowrap', textAlign: 'center',
+                        }}>
+                          {cleanLabel}
+                        </div>
+                      </div>
+
+                      {/* Connector line to next step */}
+                      {!isLast && (
+                        <div style={{ flex: 1, height: '2px', marginTop: '11px', backgroundColor: lineColor }} />
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
           </div>
 
-          {/* White gap between tabs and section-divider line */}
-          <div style={{ height: '6px', backgroundColor: '#fff', flexShrink: 0 }} />
+          <div style={{ height: '8px', backgroundColor: '#fff', flexShrink: 0 }} />
 
           {/* Tab content — borderTop is the thin section-divider line below the white gap */}
           <div style={{ flex: 1, overflow: isNarrow ? 'visible' : 'auto', borderTop: GREY_LINE }}>
