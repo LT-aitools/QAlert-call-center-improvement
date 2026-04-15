@@ -98,7 +98,7 @@ const FORM_BTN: React.CSSProperties = {
 function FormRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '7px' }}>
-      <div style={{ fontSize: T4, color: '#555', marginBottom: '2px' }}>{label}</div>
+      <div style={{ fontSize: T3, color: '#555', marginBottom: '2px' }}>{label}</div>
       {children}
     </div>
   );
