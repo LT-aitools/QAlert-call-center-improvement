@@ -255,7 +255,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     { key: 'what',  label: 'What (0)',      warning: whatIncomplete },
     { key: 'where', label: 'Where',         warning: whereIncomplete },
     { key: 'more',  label: 'Upload Files' },
-    ...(!isNewTicket ? [{ key: 'history' as FormTab, label: `Manage & History (${historyCount})`, disabled: false }] : []),
+    ...(!isNewTicket ? [{ key: 'history' as FormTab, label: `Actions (${historyCount})`, disabled: false }] : []),
   ];
   const currentStepIdx = formTabs.findIndex(f => f.key === formTab);
   const nextStep = formTabs[currentStepIdx + 1];
