@@ -78,6 +78,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [relatedCollapsed, setRelatedCollapsed] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [draftToast, setDraftToast]             = useState(false);
+  const [formKey, setFormKey]                   = useState(0);
   const [rowWarnTicket, setRowWarnTicket]       = useState<RelatedRequest | null>(null);
   const [contextMenu, setContextMenu]           = useState<{ x: number; y: number; ticket: RelatedRequest } | null>(null);
   const [notifPrefMet, setNotifPrefMet]         = useState(false);
@@ -182,8 +183,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setSelectedType('');
     setSelectedAddress('');
     setActiveTicket(null);
-    setComments('');
-    setNotifPrefMet(false);
+    setFormKey(k => k + 1);
   }
 
   function handleSaveDraft() {
@@ -487,7 +487,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           <div style={{ height: '18px', backgroundColor: '#fff', flexShrink: 0 }} />
 
           {/* Tab content — borderTop is the thin section-divider line below the white gap */}
-          <div style={{ flex: 1, overflow: isNarrow ? 'visible' : 'auto', borderTop: GREY_LINE }}>
+          <div key={formKey} style={{ flex: 1, overflow: isNarrow ? 'visible' : 'auto', borderTop: GREY_LINE }}>
             {formTab === 'who' && (
               <WhoTab
                 submitter={submitter}

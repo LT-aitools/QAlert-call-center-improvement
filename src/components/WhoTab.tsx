@@ -211,6 +211,11 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
             </button>
           )}
 
+          {/* Divider between search and detail fields */}
+          {(!!submitter || showManualEntry) && (
+            <div style={{ borderTop: '1px solid #d8dde3', marginTop: '14px', marginBottom: '2px' }} />
+          )}
+
           {/* Name row — shown when submitter selected OR adding new */}
           {(!!submitter || showManualEntry) && (
             <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
