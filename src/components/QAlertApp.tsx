@@ -78,6 +78,10 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [relatedCollapsed, setRelatedCollapsed] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [draftToast, setDraftToast]             = useState(false);
+  const [rowWarnTicket, setRowWarnTicket]       = useState<RelatedRequest | null>(null);
+  const [contextMenu, setContextMenu]           = useState<{ x: number; y: number; ticket: RelatedRequest } | null>(null);
+  const [notifPrefMet, setNotifPrefMet]         = useState(false);
+  const [comments, setComments]                 = useState('');
 
   useEffect(() => {
     const handler = () => setIsNarrow(window.innerWidth <= 1350);
@@ -178,6 +182,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setSelectedType('');
     setSelectedAddress('');
     setActiveTicket(null);
+    setComments('');
+    setNotifPrefMet(false);
   }
 
   function handleSaveDraft() {
@@ -185,8 +191,37 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setTimeout(() => setDraftToast(false), 2500);
   }
 
+  function handleRowClick(r: RelatedRequest) {
+    if (isInProgress) { setRowWarnTicket(r); return; }
+    openTicket(r);
+  }
+
+  function handleRowContextMenu(e: React.MouseEvent, r: RelatedRequest) {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, ticket: r });
+  }
+
+  function handleOpenInNewTab(_r: RelatedRequest) {
+    // No-op in prototype — would open ticket in a new browser tab
+    setContextMenu(null);
+  }
+
   const isInProgress = submitter !== null || selectedType !== '' || formTab !== 'who';
   const isNewTicket = !activeTicket;
+  const canSubmit = !!(
+    formData.firstName?.trim() &&
+    formData.lastName?.trim() &&
+    notifPrefMet &&
+    selectedType &&
+    comments.trim() &&
+    selectedAddress
+  );
+
+  function handleSubmit() {
+    handleSave();
+    setComments('');
+    setNotifPrefMet(false);
+  }
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
     { key: 'who',   label: 'Who' },
     { key: 'what',  label: 'What (0)', warning: true },
@@ -253,6 +288,30 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 ✓ Draft saved
               </span>
             )}
+            {/* Submit Request — right-aligned in toolbar */}
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={canSubmit ? handleSubmit : undefined}
+              title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '0 14px', height: '100%',
+                fontSize: T2, fontWeight: 600,
+                background: canSubmit ? '#1a7a4a' : 'transparent',
+                color: canSubmit ? '#fff' : '#aab',
+                border: 'none',
+                borderLeft: `1px solid ${SEP_COLOR}`,
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap',
+                transition: 'background 0.15s',
+              }}
+            >
+              {/* Send icon */}
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 10.5l15-9-5 9 5 9-15-9z"/>
+              </svg>
+              Submit Request
+            </button>
           </>
         ) : (
           <button
@@ -439,9 +498,10 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 }}
                 formData={formData}
                 onFormDataChange={setFormData}
+                onNotifPrefChange={setNotifPrefMet}
               />
             )}
-            {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} />}
+            {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} onCommentsChange={setComments} />}
             {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} residentFormData={formData} />}
             {formTab === 'more' && <FilesTab />}
             {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && (
@@ -451,15 +511,58 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             )}
           </div>
 
-          {/* ── Next button footer ── */}
-          <div style={{ flexShrink: 0, borderTop: GREY_LINE, padding: '8px 24px', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#fff', minHeight: '42px' }}>
+          {/* ── Footer: Next / Submit ── */}
+          <div style={{ flexShrink: 0, borderTop: GREY_LINE, padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#fff', minHeight: '50px' }}>
+            {/* Step 4 (Upload Files) — no "Next", just Submit */}
+            {!nextStep && (
+              <button
+                onClick={canSubmit ? handleSubmit : undefined}
+                title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  padding: '8px 22px',
+                  background: canSubmit ? '#1a7a4a' : '#e0e4e8',
+                  color: canSubmit ? '#fff' : '#aab',
+                  border: 'none', borderRadius: '4px',
+                  fontSize: T2, fontWeight: 700,
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
+                Submit Request
+              </button>
+            )}
+
+            {/* Step 3 (Where) — show both Next and a secondary Submit */}
+            {nextStep && !nextStep.disabled && formTab === 'where' && (
+              <button
+                onClick={canSubmit ? handleSubmit : undefined}
+                title={canSubmit ? 'Skip Upload Files and submit now' : 'Fill in all required fields first'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '6px 16px',
+                  background: 'transparent',
+                  color: canSubmit ? '#1a7a4a' : '#bbc',
+                  border: `1.5px solid ${canSubmit ? '#1a7a4a' : '#d0d4da'}`,
+                  borderRadius: '4px',
+                  fontSize: T2, fontWeight: 600,
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
+                Submit Request
+              </button>
+            )}
+
+            {/* Standard Next button (steps 1, 2, 3) */}
             {nextStep && !nextStep.disabled && (
               <button
                 onClick={() => setFormTab(nextStep.key)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '6px 18px', backgroundColor: NAV_BG, color: '#fff',
-                  border: 'none', borderRadius: '3px',
+                  padding: '7px 18px', backgroundColor: NAV_BG, color: '#fff',
+                  border: 'none', borderRadius: '4px',
                   fontSize: T2, cursor: 'pointer',
                 }}
               >
@@ -501,8 +604,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               <span style={{ fontSize: '13px', color: '#2563eb', lineHeight: 1 }}>›</span>
               <span style={{
                 writingMode: 'vertical-rl', transform: 'rotate(180deg)',
-                fontSize: '10px', color: '#888', letterSpacing: '0.05em',
-                fontWeight: 600, whiteSpace: 'nowrap',
+                fontSize: H2, color: '#888', letterSpacing: '0.05em',
+                fontWeight: 700, whiteSpace: 'nowrap',
               }}>
                 Related Info
               </span>
@@ -524,11 +627,11 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 style={{
                   marginLeft: 'auto', cursor: 'pointer',
                   background: '#f0f2f4', border: '1px solid #c8d0d8', borderRadius: '4px',
-                  color: '#555', fontSize: '11px', lineHeight: 1,
+                  color: '#555', fontSize: H2, lineHeight: 1,
                   padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '3px',
                 }}
               >
-                <span style={{ fontSize: '13px', lineHeight: 1 }}>‹</span> Collapse
+                <span style={{ fontSize: '15px', lineHeight: 1 }}>‹</span> Collapse
               </button>
             </div>
             {/* Tabs + filters row */}
@@ -614,7 +717,14 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               </thead>
               <tbody>
                 {relatedRequests.filter(r => statusFilter.includes(r.status)).map((r, i) => (
-                  <tr key={r.id} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f7f9fb', borderBottom: GREY_LINE, color: '#444', cursor: 'pointer' }}>
+                  <tr
+                    key={r.id}
+                    onClick={() => handleRowClick(r)}
+                    onContextMenu={e => handleRowContextMenu(e, r)}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#eef4fb')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = i % 2 === 0 ? '#fff' : '#f7f9fb')}
+                    style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f7f9fb', borderBottom: GREY_LINE, color: '#444', cursor: 'pointer' }}
+                  >
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap', fontWeight: 500 }}>{r.id}</td>
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}>
                       <span style={{
@@ -663,6 +773,91 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
       </div>
 
       {freePanel && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50 }}>{freePanel}</div>}
+
+      {/* ── Row-click warning dialog (in-progress guard) ── */}
+      {rowWarnTicket && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '6px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            width: '440px', padding: '28px 28px 20px',
+            display: 'flex', flexDirection: 'column', gap: '16px',
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>You have unsaved work</div>
+            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.6 }}>
+              Opening ticket <strong>#{rowWarnTicket.id}</strong> here will replace what you're currently working on.
+              <br /><br />
+              To keep both, <strong>right-click the row</strong> and choose <em>Open in new tab</em>.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <button
+                onClick={() => setRowWarnTicket(null)}
+                style={{ padding: '7px 20px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Keep editing
+              </button>
+              <button
+                onClick={() => { openTicket(rowWarnTicket); setRowWarnTicket(null); }}
+                style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: NAV_BG, color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Open anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Right-click context menu ── */}
+      {contextMenu && (
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 1100,
+            backgroundColor: '#fff',
+            border: GREY_LINE,
+            borderRadius: '4px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+            minWidth: '180px',
+            padding: '4px 0',
+            fontSize: T2,
+          }}
+        >
+          <button
+            onClick={() => handleOpenInNewTab(contextMenu.ticket)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              width: '100%', padding: '8px 14px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: T2, color: '#222', textAlign: 'left',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#eef4fb')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <span style={{ fontSize: '13px' }}>↗</span> Open in new tab
+          </button>
+          <div style={{ borderTop: GREY_LINE, margin: '4px 0' }} />
+          <button
+            onClick={() => { handleRowClick(contextMenu.ticket); setContextMenu(null); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              width: '100%', padding: '8px 14px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: T2, color: '#222', textAlign: 'left',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#eef4fb')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <span style={{ fontSize: '13px' }}>↩</span> Open here
+          </button>
+        </div>
+      )}
 
       {/* ── Cancel confirmation dialog ── */}
       {cancelDialogOpen && (

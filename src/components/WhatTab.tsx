@@ -94,7 +94,7 @@ function getPromptText(selectedType: string): string {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void } = {}) {
+export function WhatTab({ onTypeChange, onCommentsChange }: { onTypeChange?: (t: string) => void; onCommentsChange?: (c: string) => void } = {}) {
   const [selectedType, setSelectedType] = useState<string>('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -336,7 +336,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
       {/* ─── Comments ─── */}
       <div style={{ marginTop: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#333' }}>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#333' }}>
             Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span>
           </span>
           <button
@@ -348,7 +348,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
         </div>
         <textarea
           value={comments}
-          onChange={e => setComments(e.target.value)}
+          onChange={e => { setComments(e.target.value); onCommentsChange?.(e.target.value); }}
           rows={5}
           style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T4, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
         />

@@ -7,6 +7,7 @@ interface WhoTabProps {
   onSubmitterChange: (submitter: Submitter | null) => void;
   formData: Partial<Submitter>;
   onFormDataChange: (data: Partial<Submitter>) => void;
+  onNotifPrefChange?: (met: boolean) => void;
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -39,7 +40,7 @@ const emptyForm = {
   email: '', phone: '', unit: '', phoneExt: '', altPhone: '', altPhoneExt: '',
 };
 
-export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChange }: WhoTabProps) {
+export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChange, onNotifPrefChange }: WhoTabProps) {
   const [searchQuery, setSearchQuery]     = useState('');
   const [searchResults, setSearchResults] = useState<Submitter[]>([]);
   const [showDropdown, setShowDropdown]   = useState(false);
@@ -124,6 +125,10 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const callEnabled       = notif.primaryVoice || notif.alternateVoice;
   const callTarget        = notif.alternateVoice ? 'alternate' : 'primary';
   const anyNotifSelected  = notif.primaryEmail || textEnabled || callEnabled;
+
+  useEffect(() => {
+    onNotifPrefChange?.(anyNotifSelected || notifNone);
+  }, [anyNotifSelected, notifNone]);
 
   function setTextEnabled(on: boolean) {
     if (on) setNotifNone(false);
