@@ -289,7 +289,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               cursor: 'pointer',
               whiteSpace: 'nowrap',
             }}>
-              {t === 'details' ? 'Service Request Details' : 'Request Search'}
+              {t === 'details' ? 'ℹ Details' : '🔎 Search Existing Request'}
             </button>
           );
         })}

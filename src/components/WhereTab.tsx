@@ -465,8 +465,9 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
             </div>
 
             <div ref={mapTypeRef} style={{ position: 'relative' }}>
-              <button onClick={() => setMapTypeOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: T4, color: '#222', padding: '0 2px', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                Map Type: {mapType}
+              <button onClick={() => setMapTypeOpen(o => !o)} style={{ background: '#fff', border: '1px solid #b0b8c4', borderRadius: '3px', cursor: 'pointer', fontSize: T4, color: '#222', padding: '3px 6px 3px 7px', whiteSpace: 'nowrap', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                Map: {mapType}
+                <svg width="9" height="6" viewBox="0 0 9 6" fill="none" stroke="#666" strokeWidth="1.5" style={{ flexShrink: 0 }}><polyline points="1,1 4.5,5 8,1"/></svg>
               </button>
               {mapTypeOpen && (
                 <div style={{ position: 'absolute', top: '110%', left: 0, zIndex: 300, backgroundColor: '#fff', border: BORDER, boxShadow: '0 2px 8px rgba(0,0,0,0.18)', minWidth: '110px', borderRadius: '3px' }}>
