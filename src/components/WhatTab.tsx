@@ -100,14 +100,17 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
   const [searchQuery, setSearchQuery]   = useState('');
   const [hoverL1, setHoverL1]           = useState<RTNode | null>(null);
   const [hoverL2, setHoverL2]           = useState<RTNode | null>(null);
-  const [comments, setComments]         = useState('');
-  const [privateNotes, setPrivateNotes] = useState('');
-  const [promptsOpen, setPromptsOpen]   = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentSearch, setCommentSearch] = useState('');
+  const [comments, setComments]               = useState('');
+  const [privateNotes, setPrivateNotes]       = useState('');
+  const [showPrivateNotes, setShowPrivateNotes] = useState(false);
+  const [promptsOpen, setPromptsOpen]         = useState(false);
+  const [commentsOpen, setCommentsOpen]       = useState(false);
+  const [commentSearch, setCommentSearch]     = useState('');
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const wrapperRef  = useRef<HTMLDivElement>(null);
+  const typeInputRef = useRef<HTMLInputElement>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -117,6 +120,9 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Auto-focus Type input when tab mounts
+  useEffect(() => { typeInputRef.current?.focus(); }, []);
 
   function openDropdown() {
     setDropdownOpen(true);
@@ -176,7 +182,13 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
         <div ref={wrapperRef} style={{ position: 'relative', width: '340px' }}>
           {/* Input */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            {/* Search icon — left */}
+            <svg style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
+              <circle cx="6.5" cy="6.5" r="5" />
+              <line x1="10.5" y1="10.5" x2="15" y2="15" />
+            </svg>
             <input
+              ref={typeInputRef}
               type="text"
               value={isSearching ? searchQuery : selectedType}
               onChange={handleInputChange}
@@ -186,7 +198,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
                 border: inputBorder,
                 borderRadius: '3px',
                 fontSize: '13px',
-                padding: '7px 28px 7px 8px',
+                padding: '7px 24px 7px 28px',
                 width: '100%',
                 boxSizing: 'border-box',
                 outline: 'none',
@@ -297,45 +309,67 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
         </div>
       )}
 
-      {/* ─── Comments + Private Notes row ─── */}
-      <div style={{ display: 'flex', gap: '12px' }}>
-
-        {/* Comments column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Invisible spacer — matches Prompts badge height so both columns stay aligned */}
-          <div style={{ height: '18px', marginBottom: '2px', visibility: 'hidden' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-            <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span></span>
-            <ChatBadge label="Comments" onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }} />
-          </div>
-          <textarea
-            value={comments}
-            onChange={e => setComments(e.target.value)}
-            rows={5}
-            style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T3, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
-          />
-        </div>
-
-        {/* Private Notes column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Prompts badge row — always reserves same height as the spacer above */}
-          <div style={{ height: '18px', marginBottom: '2px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      {/* ─── Comments ─── */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>
+            Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {hasPrompt && (
               <PromptsBadge onClick={() => { setPromptsOpen(true); setCommentsOpen(false); }} />
             )}
+            <button
+              onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#888', textDecoration: 'underline' }}
+            >
+              Choose from saved comments
+            </button>
           </div>
+        </div>
+        <textarea
+          value={comments}
+          onChange={e => setComments(e.target.value)}
+          rows={5}
+          style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T3, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
+        />
+      </div>
+
+      {/* ─── Private Notes (collapsed by default) ─── */}
+      {!showPrivateNotes ? (
+        <button
+          onClick={() => setShowPrivateNotes(true)}
+          style={{ marginTop: '8px', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#888', textDecoration: 'underline' }}
+        >
+          + Add private note
+        </button>
+      ) : (
+        <div style={{ marginTop: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
             <span style={{ fontSize: T3, fontWeight: 700, color: '#333' }}>Private Notes</span>
-            <ChatBadge label="Comments" onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#888', textDecoration: 'underline' }}
+              >
+                Choose from saved comments
+              </button>
+              <button
+                onClick={() => setShowPrivateNotes(false)}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#bbb', textDecoration: 'underline' }}
+              >
+                hide
+              </button>
+            </div>
           </div>
           <textarea
             value={privateNotes}
             onChange={e => setPrivateNotes(e.target.value)}
-            rows={5}
+            rows={4}
             style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T3, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
           />
         </div>
-      </div>
+      )}
 
       {/* ─── Prompts slide-in panel ─── */}
       <div style={{
@@ -479,20 +513,6 @@ function SearchResultItem({ name, depth, onClick }: { name: string; depth: numbe
   );
 }
 
-// Green chat bubble + label
-function ChatBadge({ label, onClick }: { label: string; onClick?: () => void }) {
-  return (
-    <span
-      onClick={onClick}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#16a34a', fontSize: T4, fontWeight: 600, cursor: 'pointer' }}
-    >
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="#16a34a">
-        <path d="M2 2h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5l-3 3V3a1 1 0 0 1 1-1z" />
-      </svg>
-      {label}
-    </span>
-  );
-}
 
 const PROMPTS_BLUE = '#4a90c4';
 
