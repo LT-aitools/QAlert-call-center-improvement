@@ -1,3 +1,5 @@
+// ABOUTME: What tab: request type search/browse and comments for the QAlert prototype.
+// ABOUTME: Request type defaults to search-first; full category tree opens only via "Browse all".
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { REQUEST_TYPES } from '../data/requestTypes';
 import type { RTNode } from '../data/requestTypes';
@@ -97,6 +99,8 @@ function getPromptText(selectedType: string): string {
 export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialComments }: { onTypeChange?: (t: string) => void; onCommentsChange?: (c: string) => void; initialType?: string; initialComments?: string } = {}) {
   const [selectedType, setSelectedType] = useState<string>(initialType ?? '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  /** When true, empty-query dropdown shows the cascading tree (opened only from "Browse all…"). */
+  const [browseOpen, setBrowseOpen]     = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
   const [hoverL1, setHoverL1]           = useState<RTNode | null>(null);
   const [hoverL2, setHoverL2]           = useState<RTNode | null>(null);
@@ -109,13 +113,13 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
 
   const wrapperRef       = useRef<HTMLDivElement>(null);
   const typeInputRef     = useRef<HTMLInputElement>(null);
-  const suppressFocusRef = useRef(true); // skip dropdown on programmatic auto-focus
 
   // Close dropdown on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+        setBrowseOpen(false);
       }
     }
     document.addEventListener('mousedown', handler);
@@ -125,9 +129,9 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
   // Auto-focus Type input when tab mounts
   useEffect(() => { typeInputRef.current?.focus(); }, []);
 
-  function openDropdown() {
-    if (suppressFocusRef.current) { suppressFocusRef.current = false; return; }
+  function openBrowseMode() {
     setDropdownOpen(true);
+    setBrowseOpen(true);
     setSearchQuery('');
     setHoverL1(null);
     setHoverL2(null);
@@ -137,14 +141,17 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
     setSelectedType(name);
     onTypeChange?.(name);
     setDropdownOpen(false);
+    setBrowseOpen(false);
     setSearchQuery('');
     setHoverL1(null);
     setHoverL2(null);
   }
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setDropdownOpen(true);
+    const v = e.target.value;
+    setSearchQuery(v);
+    setBrowseOpen(false);
+    setDropdownOpen(v.trim().length > 0);
     setHoverL1(null);
     setHoverL2(null);
   }, []);
@@ -182,44 +189,36 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
         <div style={{ fontSize: '15px', fontWeight: 700, color: '#333', marginBottom: '6px' }}>Type <span style={{ color: '#c00', fontWeight: 700 }}>*</span></div>
 
         <div ref={wrapperRef} style={{ position: 'relative', width: '460px' }}>
-          {/* Input */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            {/* Search icon — left */}
-            <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
-              <circle cx="6.5" cy="6.5" r="5" />
-              <line x1="10.5" y1="10.5" x2="15" y2="15" />
-            </svg>
-            <input
-              ref={typeInputRef}
-              type="text"
-              value={isSearching ? searchQuery : selectedType}
-              onChange={handleInputChange}
-              onFocus={openDropdown}
-              placeholder="Search or select a type"
-              style={{
-                border: inputBorder,
-                borderRadius: '3px',
-                fontSize: '15px',
-                padding: '8px 32px 8px 32px',
-                width: '100%',
-                boxSizing: 'border-box',
-                outline: 'none',
-                color: '#222',
-                backgroundColor: '#fff',
-              }}
-            />
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                if (dropdownOpen && !isSearching) setDropdownOpen(false);
-                else openDropdown();
-              }}
-              style={{ position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', fontSize: '10px', color: '#666', lineHeight: 1 }}
-            >▼</button>
-          </div>
+          {/* Input + anchored dropdown (panel opens directly under the field) */}
+          <div style={{ position: 'relative', width: '100%' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              {/* Search icon — left */}
+              <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
+                <circle cx="6.5" cy="6.5" r="5" />
+                <line x1="10.5" y1="10.5" x2="15" y2="15" />
+              </svg>
+              <input
+                ref={typeInputRef}
+                type="text"
+                value={isSearching ? searchQuery : selectedType}
+                onChange={handleInputChange}
+                placeholder="Search request types"
+                style={{
+                  border: inputBorder,
+                  borderRadius: '3px',
+                  fontSize: '15px',
+                  padding: '8px 12px 8px 32px',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                  color: '#222',
+                  backgroundColor: '#fff',
+                }}
+              />
+            </div>
 
-          {/* Dropdown */}
-          {dropdownOpen && (
+          {/* Dropdown: search results (typing) or full tree (browse only) */}
+          {dropdownOpen && (isSearching || browseOpen) && (
             <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, marginTop: '2px', display: 'flex', flexDirection: 'row' }}>
               {isSearching ? (
                 /* ─── Grouped search results ─── */
@@ -299,6 +298,36 @@ export function WhatTab({ onTypeChange, onCommentsChange, initialType, initialCo
               )}
             </div>
           )}
+          </div>
+
+          <div style={{ marginTop: '5px' }}>
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
+                if (dropdownOpen && browseOpen && !isSearching) {
+                  setDropdownOpen(false);
+                  setBrowseOpen(false);
+                } else {
+                  openBrowseMode();
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                fontSize: T4,
+                color: '#2563eb',
+                textDecoration: 'underline',
+              }}
+            >
+              {dropdownOpen && browseOpen && !isSearching ? 'Close list' : 'Browse all request types'}
+            </button>
+            <span style={{ fontSize: T4, color: '#888', marginLeft: '8px' }}>
+              Categories and sub-types
+            </span>
+          </div>
         </div>
       </div>
 
