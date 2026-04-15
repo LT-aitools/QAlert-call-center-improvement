@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { RefreshCwIcon, SendIcon } from 'lucide-react';
 import type { Submitter, RelatedRequest, FormTab } from '../types/qalert';
 import { mockTicketsBySubmitter, mockSubmitters, findTicketById, getTicketHistory } from '../data/mockData';
+import { REQUEST_TYPES } from '../data/requestTypes';
 import { WhoTab } from './WhoTab';
 import { WhatTab } from './WhatTab';
 import { WhereTab } from './WhereTab';
@@ -69,6 +70,18 @@ function resolveSubmitterIdForTicket(ticket: RelatedRequest): string | undefined
   return mockSubmitters.find(s => displayName(s) === label)?.id;
 }
 
+function findDepartmentForRequestType(typeName: string): string | undefined {
+  function walk(nodes: typeof REQUEST_TYPES): string | undefined {
+    for (const node of nodes) {
+      if (node.name === typeName) return node.dept;
+      const found = walk(node.children);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  return walk(REQUEST_TYPES);
+}
+
 export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [mainTab, setMainTab]               = useState<MainTab>('details');
   const [formTab, setFormTab]               = useState<FormTab>('who');
@@ -92,6 +105,9 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [missingFieldsDialogOpen, setMissingFieldsDialogOpen] = useState(false);
   const [missingSubmitFields, setMissingSubmitFields] = useState<string[]>([]);
+  const [submitConfirmationOpen, setSubmitConfirmationOpen] = useState(false);
+  const [closeTicketWarningOpen, setCloseTicketWarningOpen] = useState(false);
+  const [submittedTicketPreview, setSubmittedTicketPreview] = useState<RelatedRequest | null>(null);
   const [draftToast, setDraftToast]             = useState(false);
   const [formKey, setFormKey]                   = useState(0);
   const [rowWarnTicket, setRowWarnTicket]       = useState<RelatedRequest | null>(null);
@@ -117,12 +133,13 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  function buildRequest(): RelatedRequest {
+  function buildRequest(overrides: Partial<RelatedRequest> = {}): RelatedRequest {
     const now = formatDateTime(new Date());
     const name = formData.firstName || formData.lastName
       ? `${formData.firstName ?? ''} ${formData.lastName ?? ''}`.trim()
       : submitter ? `${submitter.firstName} ${submitter.lastName}` : 'Unknown';
-    return {
+    const dept = findDepartmentForRequestType(selectedType) ?? 'Call Center';
+    const base: RelatedRequest = {
       id: String(_nextId++),
       priority: 2,
       address: selectedAddress || 'N/A',
@@ -130,9 +147,70 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
       requestType: selectedType || 'N/A',
       submitter: name,
       createdOn: now,
-      routedTo: '',
+      routedTo: dept,
       status: 'Closed',
+      dept,
+      origin: 'Call Center',
+      submitterId: submitter?.id,
     };
+    return { ...base, ...overrides };
+  }
+
+  function openBlankTicket() {
+    setFormData(EMPTY_FORM);
+    setSubmitter(null);
+    setFormTab('who');
+    setSelectedType('');
+    setSelectedAddress('');
+    setComments('');
+    setNotifPrefMet(false);
+    setActiveTicket(null);
+    setRelatedRequests([]);
+    setFormKey(k => k + 1);
+  }
+
+  function openTicketForSameResident() {
+    setFormTab('who');
+    setSelectedType('');
+    setSelectedAddress('');
+    setComments('');
+    setNotifPrefMet(false);
+    setActiveTicket(null);
+    setFormKey(k => k + 1);
+  }
+
+  function submitWithConfirmation() {
+    const req = buildRequest({ status: 'Open' });
+    setRelatedRequests(prev => [req, ...prev.filter(r => r.id !== req.id)]);
+    setSubmittedTicketPreview(req);
+    setSubmitConfirmationOpen(true);
+    setMissingFieldsDialogOpen(false);
+  }
+
+  function closeConfirmationAndOpenBlankTicket() {
+    setSubmitConfirmationOpen(false);
+    setCloseTicketWarningOpen(false);
+    setSubmittedTicketPreview(null);
+    openBlankTicket();
+  }
+
+  function closeConfirmationAndOpenSameResidentTicket() {
+    setSubmitConfirmationOpen(false);
+    setCloseTicketWarningOpen(false);
+    setSubmittedTicketPreview(null);
+    openTicketForSameResident();
+  }
+
+  function closeSubmittedTicketImmediately() {
+    if (!submittedTicketPreview) return;
+    const closedTicket: RelatedRequest = {
+      ...submittedTicketPreview,
+      status: 'Closed',
+      lastAction: formatDateTime(new Date()),
+    };
+    setRelatedRequests(prev => prev.map(r => r.id === closedTicket.id ? closedTicket : r));
+    setSubmittedTicketPreview(closedTicket);
+    closeConfirmationAndOpenBlankTicket();
   }
 
   function handleSave() {
@@ -198,13 +276,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   }, [relatedRequests.length]);
 
   function resetForm() {
-    setFormData(EMPTY_FORM);
-    setSubmitter(null);
-    setFormTab('who');
-    setSelectedType('');
-    setSelectedAddress('');
-    setActiveTicket(null);
-    setFormKey(k => k + 1);
+    openBlankTicket();
   }
 
   function handleSaveDraft() {
@@ -242,9 +314,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const canSubmit = submitMissingFields.length === 0;
 
   function handleSubmit() {
-    handleSave();
-    setComments('');
-    setNotifPrefMet(false);
+    submitWithConfirmation();
   }
 
   function handleSubmitAttempt() {
@@ -972,6 +1042,114 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: '#b91c1c', color: '#fff', cursor: 'pointer', fontWeight: 600 }}
               >
                 Yes, cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Submit confirmation dialog ── */}
+      {submitConfirmationOpen && submittedTicketPreview && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            width: '520px',
+            padding: '24px 26px 20px',
+            display: 'flex', flexDirection: 'column', gap: '12px',
+          }}>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: '#1a1a1a' }}>
+              Request submitted successfully
+            </div>
+            <div style={{
+              backgroundColor: '#f5f8fc',
+              border: GREY_LINE,
+              borderRadius: '6px',
+              padding: '12px 14px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              rowGap: '6px',
+              columnGap: '10px',
+            }}>
+              <div style={{ fontSize: T2, color: '#334155' }}>
+                <span style={{ color: '#64748b' }}>Case #</span>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: NAV_BG, lineHeight: 1.2 }}>
+                  {submittedTicketPreview.id}
+                </div>
+              </div>
+              <div style={{ fontSize: T2, color: '#334155' }}>
+                <span style={{ color: '#64748b' }}>Routed To</span>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', lineHeight: 1.3 }}>
+                  {submittedTicketPreview.dept ?? submittedTicketPreview.routedTo}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.5 }}>
+              Choose what to do next:
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setCloseTicketWarningOpen(true)}
+                style={{ padding: '7px 14px', fontSize: T2, border: `1px solid #f59e0b`, borderRadius: '3px', background: '#fff7ed', color: '#9a3412', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Immediately close ticket
+              </button>
+              <button
+                onClick={closeConfirmationAndOpenSameResidentTicket}
+                style={{ padding: '7px 14px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Add another ticket for same resident
+              </button>
+              <button
+                onClick={closeConfirmationAndOpenBlankTicket}
+                style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: NAV_BG, color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Immediate-close warning dialog ── */}
+      {closeTicketWarningOpen && submittedTicketPreview && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1100,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            width: '460px',
+            padding: '24px 26px 20px',
+            display: 'flex', flexDirection: 'column', gap: '12px',
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b' }}>
+              Close ticket immediately?
+            </div>
+            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.6 }}>
+              Ticket <strong>#{submittedTicketPreview.id}</strong> will be marked <strong>Closed</strong> right away.
+              This may skip normal follow-up actions from the routed department.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+              <button
+                onClick={() => setCloseTicketWarningOpen(false)}
+                style={{ padding: '7px 16px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Go back
+              </button>
+              <button
+                onClick={closeSubmittedTicketImmediately}
+                style={{ padding: '7px 16px', fontSize: T2, border: 'none', borderRadius: '3px', background: '#b91c1c', color: '#fff', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Yes, close ticket now
               </button>
             </div>
           </div>
