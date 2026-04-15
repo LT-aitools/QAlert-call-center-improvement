@@ -133,6 +133,11 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Dismiss right-click menu whenever panel/view context changes.
+  useEffect(() => {
+    setContextMenu(null);
+  }, [relatedCollapsed, mainTab, formTab]);
+
   function buildRequest(overrides: Partial<RelatedRequest> = {}): RelatedRequest {
     const now = formatDateTime(new Date());
     const name = formData.firstName || formData.lastName
