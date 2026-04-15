@@ -56,6 +56,18 @@ function formatDateTime(d: Date): string {
 
 let _nextId = 114729;
 
+/** Resolve mock submitter id when RelatedRequest omits submitterId (e.g. rows from mockTicketsBySubmitter). */
+function resolveSubmitterIdForTicket(ticket: RelatedRequest): string | undefined {
+  if (ticket.submitterId) return ticket.submitterId;
+  for (const [sid, rows] of Object.entries(mockTicketsBySubmitter)) {
+    if (rows.some(r => r.id === ticket.id)) return sid;
+  }
+  const label = ticket.submitter.trim();
+  const displayName = (s: Submitter) =>
+    `${s.firstName} ${s.lastName}${s.mi ? ` ${s.mi}` : ''}`.replace(/\s+/g, ' ').trim();
+  return mockSubmitters.find(s => displayName(s) === label)?.id;
+}
+
 export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [mainTab, setMainTab]               = useState<MainTab>('details');
   const [formTab, setFormTab]               = useState<FormTab>('who');
@@ -135,12 +147,18 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setActiveTicket(ticket);
     setMainTab('details');
     setFormTab('who');
-    // Load the submitter if we have them in the mock db
-    if (ticket.submitterId) {
-      const found = mockSubmitters.find(s => s.id === ticket.submitterId) ?? null;
+    setFormKey(k => k + 1);
+    setComments('');
+    const sid = resolveSubmitterIdForTicket(ticket);
+    if (sid) {
+      const found = mockSubmitters.find(s => s.id === sid) ?? null;
       setSubmitter(found);
-      setFormData(found ?? EMPTY_FORM);
+      setFormData(found ? { ...found } : EMPTY_FORM);
       if (found) setRelatedRequests(mockTicketsBySubmitter[found.id] ?? []);
+    } else {
+      setSubmitter(null);
+      setFormData(EMPTY_FORM);
+      setRelatedRequests([]);
     }
     setSelectedType(ticket.requestType);
     setSelectedAddress(ticket.address);
