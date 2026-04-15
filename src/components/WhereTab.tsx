@@ -241,20 +241,31 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
           Where is the issue?
         </div>
 
+        {/* Resident address shortcut — above search */}
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#222', marginBottom: '8px', padding: '6px 8px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
+          <input
+            type="checkbox"
+            checked={useResidentAddress}
+            onChange={e => setUseResidentAddress(e.target.checked)}
+            style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
+          />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Use resident's address from 'Who' tab</span>
+        </label>
+
         {/* Search bar + pushpin */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
+            {/* Search icon — left */}
+            <svg style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
+              <circle cx="6.5" cy="6.5" r="5" />
+              <line x1="10.5" y1="10.5" x2="15" y2="15" />
+            </svg>
             <input
               type="text"
               value={mapSearch}
               onChange={e => setMapSearch(e.target.value)}
-              placeholder="Search"
-              style={{ ...INPUT_STYLE, fontSize: '13px', padding: '7px 32px 7px 8px' }}
-            />
-            <img
-              src={`${BASE}icons/search.png`}
-              alt="search"
-              style={{ position: 'absolute', right: '7px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', opacity: 0.55, pointerEvents: 'none' }}
+              placeholder="Search address…"
+              style={{ ...INPUT_STYLE, fontSize: '13px', padding: '7px 8px 7px 28px' }}
             />
           </div>
 
@@ -454,17 +465,6 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
 
       {/* ── Right: Address form ── */}
       <div style={{ width: '205px', flexShrink: 0 }}>
-
-        {/* Resident address checkbox */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#222', marginBottom: '10px', padding: '6px 8px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
-          <input
-            type="checkbox"
-            checked={useResidentAddress}
-            onChange={e => setUseResidentAddress(e.target.checked)}
-            style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
-          />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Add resident's address from 'Who' tab</span>
-        </label>
 
         <FormRow label="City">
           <select value={city} onChange={e => setCity(e.target.value)} disabled={useResidentAddress} style={{ ...SELECT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}>
