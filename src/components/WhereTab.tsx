@@ -30,6 +30,33 @@ const STREET_VIEW_IMG = `${BASE}streetview-psl.jpg`;
 const STREET_VIEW_ADDR = '271 SW Statler Ave';
 const STREET_VIEW_CITY = 'Port St. Lucie, Florida';
 
+interface NominatimResult {
+  lat: string;
+  lon: string;
+  display_name: string;
+  address?: {
+    house_number?: string;
+    road?: string;
+    pedestrian?: string;
+    footway?: string;
+    cycleway?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    municipality?: string;
+  };
+}
+
+interface AddressSuggestion {
+  key: string;
+  label: string;
+  streetNumber: string;
+  streetName: string;
+  city: string;
+  lat: number;
+  lon: number;
+}
+
 function buildMapSrc(
   zoom:   number,
   center: { lat: number; lon: number },
@@ -162,6 +189,9 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   const [overlaysOpen, setOverlaysOpen]       = useState(false);
   const [activeOverlays, setActiveOverlays]   = useState<string[]>([]);
   const [mapSearch, setMapSearch]             = useState(initialStreetLine);
+  const [mapSearchResults, setMapSearchResults] = useState<AddressSuggestion[]>([]);
+  const [mapSearchOpen, setMapSearchOpen]     = useState(false);
+  const [mapSearchLoading, setMapSearchLoading] = useState(false);
   const [pinDropped, setPinDropped]           = useState(false);
   const [pinPos, setPinPos]                   = useState({ x: 50, y: 50 });
   const [isDraggingPin, setIsDraggingPin]     = useState(false);
@@ -173,6 +203,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
 
   const mapTypeRef  = useRef<HTMLDivElement>(null);
   const overlaysRef = useRef<HTMLDivElement>(null);
+  const mapSearchRef = useRef<HTMLDivElement>(null);
   const mapDivRef   = useRef<HTMLDivElement>(null);
   const prevUseResidentRef = useRef(useResidentAddress);
 
@@ -180,6 +211,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
     function handler(e: MouseEvent) {
       if (mapTypeRef.current && !mapTypeRef.current.contains(e.target as Node)) setMapTypeOpen(false);
       if (overlaysRef.current && !overlaysRef.current.contains(e.target as Node)) setOverlaysOpen(false);
+      if (mapSearchRef.current && !mapSearchRef.current.contains(e.target as Node)) setMapSearchOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -197,6 +229,8 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
       if (residentFormData.city) setCity(residentFormData.city);
       onAddressChange?.(raw ? `${raw}, ${residentFormData.city ?? city}` : '');
       setMapSearch(raw ? `${num} ${name}`.replace(/\s+/g, ' ').trim() : '');
+      setMapSearchOpen(false);
+      setMapSearchResults([]);
     } else if (prevUseResidentRef.current && !useResidentAddress) {
       // User unchecked "use resident" — clear manual fields only then (not on initial mount / loaded ticket)
       setStreetNumber('');
@@ -205,6 +239,111 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
     }
     prevUseResidentRef.current = useResidentAddress;
   }, [useResidentAddress, residentFormData]);
+
+  // Keep parent address state in sync while manually editing location fields.
+  useEffect(() => {
+    if (useResidentAddress) return;
+    if (!showManualAddress) return;
+    const streetLine = `${streetNumber} ${streetName}`.replace(/\s+/g, ' ').trim();
+    const composed = streetLine ? `${streetLine}, ${city}` : '';
+    onAddressChange?.(composed);
+  }, [useResidentAddress, showManualAddress, streetNumber, streetName, city, onAddressChange]);
+
+  function isPortStLucieResult(row: NominatimResult): boolean {
+    const cityVal = (
+      row.address?.city ??
+      row.address?.town ??
+      row.address?.village ??
+      row.address?.municipality ??
+      ''
+    ).toLowerCase();
+    const display = row.display_name.toLowerCase();
+    return cityVal.includes('port st. lucie') || cityVal.includes('port st lucie') || display.includes('port st. lucie') || display.includes('port st lucie');
+  }
+
+  function toSuggestion(row: NominatimResult): AddressSuggestion | null {
+    const road = row.address?.road ?? row.address?.pedestrian ?? row.address?.footway ?? row.address?.cycleway ?? '';
+    const streetNumberVal = row.address?.house_number ?? '';
+    const cityVal = row.address?.city ?? row.address?.town ?? row.address?.village ?? row.address?.municipality ?? 'Port St. Lucie';
+    const lat = Number(row.lat);
+    const lon = Number(row.lon);
+    if (!road || Number.isNaN(lat) || Number.isNaN(lon)) return null;
+    const streetLine = `${streetNumberVal} ${road}`.replace(/\s+/g, ' ').trim();
+    return {
+      key: `${row.lat},${row.lon},${row.display_name}`,
+      label: `${streetLine}, ${cityVal}`,
+      streetNumber: streetNumberVal,
+      streetName: road,
+      city: cityVal,
+      lat,
+      lon,
+    };
+  }
+
+  function applyAddressSuggestion(s: AddressSuggestion) {
+    setUseResidentAddress(false);
+    setShowManualAddress(true);
+    setCity(s.city || 'Port St. Lucie');
+    setStreetNumber(s.streetNumber);
+    setStreetName(s.streetName);
+    setCoordinates(`${s.lat.toFixed(6)}, ${s.lon.toFixed(6)}`);
+    setDistrict('UNPLATTED');
+    setMapCenter({ lat: s.lat, lon: s.lon });
+    setMapMarker({ lat: s.lat, lon: s.lon });
+    setZoom(17);
+    setPinDropped(true);
+    setPinPos({ x: 50, y: 50 });
+    const streetLine = `${s.streetNumber} ${s.streetName}`.replace(/\s+/g, ' ').trim();
+    setMapSearch(streetLine);
+    onAddressChange?.(`${streetLine}, ${s.city || 'Port St. Lucie'}`);
+    setMapSearchOpen(false);
+  }
+
+  useEffect(() => {
+    const q = mapSearch.trim();
+    if (useResidentAddress || q.length < 3) {
+      setMapSearchResults([]);
+      setMapSearchOpen(false);
+      setMapSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(async () => {
+      setMapSearchLoading(true);
+      try {
+        const params = new URLSearchParams({
+          q: `${q}, Port St. Lucie, Florida`,
+          format: 'jsonv2',
+          addressdetails: '1',
+          countrycodes: 'us',
+          limit: '8',
+        });
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!resp.ok) throw new Error(`Search failed: ${resp.status}`);
+        const rows = (await resp.json()) as NominatimResult[];
+        const suggestions = rows
+          .filter(isPortStLucieResult)
+          .map(toSuggestion)
+          .filter((s): s is AddressSuggestion => s !== null);
+        setMapSearchResults(suggestions);
+        setMapSearchOpen(suggestions.length > 0);
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        setMapSearchResults([]);
+        setMapSearchOpen(false);
+      } finally {
+        setMapSearchLoading(false);
+      }
+    }, 220);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [mapSearch, useResidentAddress]);
 
   function handleAddressSearch() {
     const mock = MOCK_LOOKUPS[streetNumber.trim()];
@@ -280,7 +419,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
 
         {/* Search bar + pushpin */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+          <div style={{ position: 'relative', flex: 1 }} ref={mapSearchRef}>
             {/* Search icon — left */}
             <svg style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
               <circle cx="6.5" cy="6.5" r="5" />
@@ -290,9 +429,39 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
               type="text"
               value={mapSearch}
               onChange={e => setMapSearch(e.target.value)}
+              onFocus={() => setMapSearchOpen(mapSearchResults.length > 0)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && mapSearchResults.length > 0) {
+                  e.preventDefault();
+                  applyAddressSuggestion(mapSearchResults[0]);
+                }
+              }}
               placeholder="Search address…"
               style={{ ...INPUT_STYLE, fontSize: '15px', padding: '8px 8px 8px 32px' }}
             />
+            {(mapSearchOpen || (mapSearchLoading && mapSearch.trim().length >= 3)) && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 80, backgroundColor: '#fff', border: BORDER, boxShadow: '0 2px 8px rgba(0,0,0,0.16)', marginTop: '1px', maxHeight: '220px', overflowY: 'auto' }}>
+                {mapSearchLoading ? (
+                  <div style={{ padding: '7px 10px', fontSize: T4, color: '#666' }}>Searching Port St. Lucie addresses…</div>
+                ) : mapSearchResults.length === 0 ? (
+                  <div style={{ padding: '7px 10px', fontSize: T4, color: '#999' }}>No matching Port St. Lucie addresses found.</div>
+                ) : (
+                  mapSearchResults.map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyAddressSuggestion(s);
+                      }}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', background: '#fff', padding: '7px 10px', cursor: 'pointer', borderBottom: '1px solid #eef2f5', fontSize: T4, color: '#222' }}
+                    >
+                      {s.label}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Draggable pushpin — div wrapper avoids native <img> drag conflicts */}

@@ -331,6 +331,23 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
   const historyRows = activeTicket ? getTicketHistory(activeTicket) : [];
   const historyCount  = historyRows.length;
+  const normalize = (v?: string) => (v ?? '').trim().toLowerCase();
+  const selectedSubmitterName = normalize(
+    submitter
+      ? `${submitter.firstName} ${submitter.lastName}`
+      : `${formData.firstName ?? ''} ${formData.lastName ?? ''}`
+  );
+  const selectedRequestType = normalize(selectedType);
+  const filteredRelatedRequests = relatedRequests.filter((r) => {
+    if (!statusFilter.includes(r.status)) return false;
+    if (filterByType && selectedRequestType && normalize(r.requestType) !== selectedRequestType) return false;
+    if (filterBySub) {
+      const ticketSubmitterId = resolveSubmitterIdForTicket(r);
+      if (submitter?.id && ticketSubmitterId !== submitter.id) return false;
+      if (!submitter?.id && selectedSubmitterName && normalize(r.submitter) !== selectedSubmitterName) return false;
+    }
+    return true;
+  });
 
   const formTabs: { key: FormTab; label: string; disabled?: boolean; warning?: boolean }[] = [
     { key: 'who',   label: 'Who',          warning: whoIncomplete },
@@ -868,7 +885,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 </tr>
               </thead>
               <tbody>
-                {relatedRequests.filter(r => statusFilter.includes(r.status)).map((r, i) => (
+                {filteredRelatedRequests.map((r, i) => (
                   <tr
                     key={r.id}
                     onClick={() => handleRowClick(r)}
