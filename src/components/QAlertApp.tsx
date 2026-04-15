@@ -535,32 +535,47 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 Map View
               </button>
               {/* Filters right-aligned */}
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '5px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: T4, color: '#444', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  <input type="checkbox" checked={filterByType} onChange={e => setFilterByType(e.target.checked)} style={{ accentColor: '#16a34a', width: '11px', height: '11px' }} />
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '5px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: H3, color: '#444', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={filterByType} onChange={e => setFilterByType(e.target.checked)} style={{ accentColor: '#16a34a', width: '12px', height: '12px' }} />
                   Selected Request Type Only
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: T4, color: '#444', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  <input type="checkbox" checked={filterBySub} onChange={e => setFilterBySub(e.target.checked)} style={{ accentColor: '#16a34a', width: '11px', height: '11px' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: H3, color: '#444', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <input type="checkbox" checked={filterBySub} onChange={e => setFilterBySub(e.target.checked)} style={{ accentColor: '#16a34a', width: '12px', height: '12px' }} />
                   Selected Submitter Only
                 </label>
                 {/* Status dropdown filter */}
                 <div ref={statusRef} style={{ position: 'relative' }}>
                   <button
                     onClick={() => setStatusOpen(o => !o)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: T4, fontWeight: 400, color: statusOpen ? NAV_BG : '#888', padding: '0 2px', whiteSpace: 'nowrap' }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: H3, fontWeight: 500,
+                      color: statusOpen ? NAV_BG : '#444',
+                      padding: '0 2px', whiteSpace: 'nowrap',
+                    }}
                   >
+                    {/* Funnel / filter icon */}
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M1 2h14l-5 6v5l-4-2V8L1 2z"/>
+                    </svg>
                     Status
+                    {statusFilter.length < 4 && (
+                      <span style={{ fontSize: '10px', backgroundColor: NAV_BG, color: '#fff', borderRadius: '8px', padding: '0 5px', lineHeight: '14px' }}>
+                        {statusFilter.length}
+                      </span>
+                    )}
                   </button>
                   {statusOpen && (
                     <div style={{
                       position: 'absolute', top: '110%', right: 0, zIndex: 200,
                       backgroundColor: '#fff', border: GREY_LINE,
                       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      borderRadius: '3px', minWidth: '130px', padding: '6px 0',
+                      borderRadius: '3px', minWidth: '140px', padding: '6px 0',
                     }}>
                       {['Open','In Progress','Closed','On Hold'].map(s => (
-                        <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 12px', fontSize: T4, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 12px', fontSize: H3, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                           <input
                             type="checkbox"
                             checked={statusFilter.includes(s)}
@@ -586,15 +601,34 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse', fontSize: T4 }}>
               <thead>
                 <tr style={{ backgroundColor: NAV_BG, position: isNarrow ? 'relative' : 'sticky', top: 0 }}>
-                  {['ID','Priority','Address','Last Action','Request Type','Submitter','Created On','Routed To'].map(h => (
+                  {['ID','Status','Priority','Address','Last Action','Request Type','Submitter','Created On','Routed To'].map(h => (
                     <th key={h} style={{ color: '#fff', fontWeight: 600, fontSize: H3, padding: '5px 8px', textAlign: 'left', whiteSpace: 'nowrap', borderRight: '1px solid rgba(255,255,255,0.15)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {relatedRequests.filter(r => statusFilter.includes(r.status)).map((r, i) => (
-                  <tr key={r.id} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f7f9fb', borderBottom: GREY_LINE, color: r.status === 'Open' ? '#cc2200' : '#444', cursor: 'pointer' }}>
+                  <tr key={r.id} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f7f9fb', borderBottom: GREY_LINE, color: '#444', cursor: 'pointer' }}>
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap', fontWeight: 500 }}>{r.id}</td>
+                    <td style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '1px 7px',
+                        borderRadius: '10px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        backgroundColor:
+                          r.status === 'Open'        ? '#fee2e2' :
+                          r.status === 'In Progress' ? '#dbeafe' :
+                          r.status === 'On Hold'     ? '#fef9c3' : '#f0f0f0',
+                        color:
+                          r.status === 'Open'        ? '#b91c1c' :
+                          r.status === 'In Progress' ? '#1d4ed8' :
+                          r.status === 'On Hold'     ? '#92400e' : '#555',
+                      }}>
+                        {r.status}
+                      </span>
+                    </td>
                     <td style={{ padding: '4px 8px', textAlign: 'center' }}>{r.priority}</td>
                     <td style={{ padding: '4px 8px' }}>{r.address}</td>
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}>{r.lastAction}</td>
@@ -641,7 +675,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           }}>
             <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>Cancel this ticket?</div>
             <div style={{ fontSize: T2, color: '#444', lineHeight: 1.6 }}>
-              Do you want to cancel adding this ticket? This information will not be saved, and no request will be added.
+              This information will not be saved, and no request will be added.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
               <button
