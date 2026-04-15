@@ -77,15 +77,15 @@ const CIRCLE_BTN: React.CSSProperties = {
 };
 
 const INPUT_STYLE: React.CSSProperties = {
-  border: BORDER, borderRadius: '3px', fontSize: T3,
+  border: BORDER, borderRadius: '3px', fontSize: T4,
   padding: '4px 6px', outline: 'none', color: '#222',
-  width: '100%', boxSizing: 'border-box',
+  width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 
 const SELECT_STYLE: React.CSSProperties = {
-  border: BORDER, borderRadius: '3px', fontSize: T3,
+  border: BORDER, borderRadius: '3px', fontSize: T4,
   padding: '4px 4px', outline: 'none', color: '#222',
-  width: '100%', boxSizing: 'border-box', backgroundColor: '#fff',
+  width: '100%', boxSizing: 'border-box', backgroundColor: '#fff', fontFamily: 'inherit',
 };
 
 const FORM_BTN: React.CSSProperties = {
@@ -132,6 +132,7 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
   const [unitNumber, setUnitNumber]           = useState('');
   const [crossStreet, setCrossStreet]         = useState('');
   const [useResidentAddress, setUseResidentAddress] = useState(false);
+  const [showManualAddress, setShowManualAddress]   = useState(false);
   const [coordinates, setCoordinates]         = useState('N/A');
   const [district, setDistrict]               = useState('UNPLATTED');
   const [autoUpdate, setAutoUpdate]           = useState(true);
@@ -244,7 +245,7 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
             <input
               type="checkbox"
               checked={useResidentAddress}
-              onChange={e => setUseResidentAddress(e.target.checked)}
+              onChange={e => { setUseResidentAddress(e.target.checked); if (e.target.checked) setShowManualAddress(true); }}
               style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
             />
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Use resident's address from 'Who' tab</span>
@@ -265,7 +266,7 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
               value={mapSearch}
               onChange={e => setMapSearch(e.target.value)}
               placeholder="Search address…"
-              style={{ ...INPUT_STYLE, fontSize: '13px', padding: '7px 8px 7px 28px' }}
+              style={{ ...INPUT_STYLE, fontSize: '15px', padding: '8px 8px 8px 32px' }}
             />
           </div>
 
@@ -297,6 +298,18 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
 
         {/* ── Left: Address form ── */}
         <div style={{ width: '210px', flexShrink: 0 }}>
+
+        {/* "Add address manually" toggle */}
+        {!showManualAddress && !useResidentAddress && (
+          <button
+            onClick={() => setShowManualAddress(true)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '13px', color: '#1a6fb5', textDecoration: 'underline', marginBottom: '10px', display: 'block' }}
+          >
+            + Add address manually
+          </button>
+        )}
+
+        {(showManualAddress || useResidentAddress) && <>
 
         <FormRow label="City">
           <select value={city} onChange={e => setCity(e.target.value)} disabled={useResidentAddress} style={{ ...SELECT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}>
@@ -354,6 +367,17 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
             {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </FormRow>
+
+        {!useResidentAddress && (
+          <button
+            onClick={() => setShowManualAddress(false)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '11px', color: '#bbb', textDecoration: 'underline', marginBottom: '6px', display: 'block' }}
+          >
+            hide
+          </button>
+        )}
+
+        </> }
 
         <div style={{ height: '8px' }} />
 

@@ -181,11 +181,11 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
       <div style={{ marginBottom: '4px' }}>
         <div style={{ fontSize: '15px', fontWeight: 700, color: '#333', marginBottom: '6px' }}>Type <span style={{ color: '#c00', fontWeight: 700 }}>*</span></div>
 
-        <div ref={wrapperRef} style={{ position: 'relative', width: '340px' }}>
+        <div ref={wrapperRef} style={{ position: 'relative', width: '460px' }}>
           {/* Input */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             {/* Search icon — left */}
-            <svg style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
+            <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
               <circle cx="6.5" cy="6.5" r="5" />
               <line x1="10.5" y1="10.5" x2="15" y2="15" />
             </svg>
@@ -199,8 +199,8 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
               style={{
                 border: inputBorder,
                 borderRadius: '3px',
-                fontSize: '13px',
-                padding: '7px 24px 7px 28px',
+                fontSize: '15px',
+                padding: '8px 32px 8px 32px',
                 width: '100%',
                 boxSizing: 'border-box',
                 outline: 'none',
@@ -223,7 +223,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
             <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, marginTop: '2px', display: 'flex', flexDirection: 'row' }}>
               {isSearching ? (
                 /* ─── Grouped search results ─── */
-                <div style={{ ...PANEL_STYLE, width: '340px' }}>
+                <div style={{ ...PANEL_STYLE, width: '460px' }}>
                   {searchGroups.length === 0 ? (
                     <div style={{ padding: '6px 10px', color: '#999', fontSize: T4 }}>No results</div>
                   ) : (
@@ -311,29 +311,46 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
         </div>
       )}
 
+      {/* ─── Prompt box ─── */}
+      {hasPrompt && (
+        <div style={{
+          marginTop: '14px',
+          backgroundColor: '#fffbeb',
+          border: '1px solid #f59e0b',
+          borderLeft: '4px solid #f59e0b',
+          borderRadius: '4px',
+          padding: '10px 14px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '7px' }}>
+            <span style={{ fontSize: '14px', lineHeight: 1.2, flexShrink: 0 }}>💡</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', marginBottom: '4px' }}>
+                Prompts for: {selectedType}
+              </div>
+              <PromptBody text={promptText} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Comments ─── */}
       <div style={{ marginTop: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#333' }}>
             Comments <span style={{ color: '#c00', fontWeight: 700 }}>*</span>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {hasPrompt && (
-              <PromptsBadge onClick={() => { setPromptsOpen(true); setCommentsOpen(false); }} />
-            )}
-            <button
-              onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#888', textDecoration: 'underline' }}
-            >
-              Choose from saved comments
-            </button>
-          </div>
+          <button
+            onClick={() => { setCommentsOpen(true); setPromptsOpen(false); }}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: T4, color: '#888', textDecoration: 'underline' }}
+          >
+            Choose from saved comments
+          </button>
         </div>
         <textarea
           value={comments}
           onChange={e => setComments(e.target.value)}
           rows={5}
-          style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T3, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
+          style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T4, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
         />
       </div>
 
@@ -368,7 +385,7 @@ export function WhatTab({ onTypeChange }: { onTypeChange?: (t: string) => void }
             value={privateNotes}
             onChange={e => setPrivateNotes(e.target.value)}
             rows={4}
-            style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T3, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
+            style={{ border: BORDER, borderRadius: '3px', resize: 'vertical', fontSize: T4, padding: '6px 8px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', color: '#222' }}
           />
         </div>
       )}
@@ -516,21 +533,3 @@ function SearchResultItem({ name, depth, onClick }: { name: string; depth: numbe
 }
 
 
-const PROMPTS_BLUE = '#4a90c4';
-
-// Blue info circle + "Prompts" label
-function PromptsBadge({ onClick }: { onClick: () => void }) {
-  return (
-    <span
-      onClick={onClick}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: PROMPTS_BLUE, fontSize: T4, fontWeight: 600, cursor: 'pointer' }}
-    >
-      <svg width="14" height="14" viewBox="0 0 16 16" fill={PROMPTS_BLUE}>
-        <circle cx="8" cy="8" r="7" />
-        <rect x="7.2" y="7" width="1.6" height="5" rx="0.8" fill="white" />
-        <rect x="7.2" y="4" width="1.6" height="1.8" rx="0.8" fill="white" />
-      </svg>
-      Prompts
-    </span>
-  );
-}
