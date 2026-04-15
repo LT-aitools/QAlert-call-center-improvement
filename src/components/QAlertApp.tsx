@@ -265,14 +265,23 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
         {/* ── Left: form area (only in details tab) ── */}
         {mainTab === 'details' && <div style={{
-          display: 'flex', flexDirection: 'column',
           flex: isNarrow ? 'none' : 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: isNarrow ? 'flex-start' : 'center',
           width: isNarrow ? '680px' : undefined,
-          flexShrink: 0,
           overflow: isNarrow ? 'visible' : 'hidden',
           backgroundColor: '#fff',
           borderRight: isNarrow ? 'none' : GREY_LINE,
         }}>
+          {/* Inner content — capped width, centred */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            width: '100%',
+            maxWidth: isNarrow ? undefined : '760px',
+            flex: 1,
+            overflow: isNarrow ? 'visible' : 'hidden',
+          }}>
 
           {/* Sub-header box — dynamic when a ticket is open */}
           <div style={{ padding: '6px 24px', flexShrink: 0 }}>
@@ -406,6 +415,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               </button>
             )}
           </div>
+          </div>{/* end inner centred content */}
         </div>}
 
         {/* ── Right: Related Information (details tab only) ── */}
