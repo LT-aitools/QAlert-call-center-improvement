@@ -44,7 +44,7 @@ export function FilesTab() {
     <div style={{ padding: '8px 16px', fontSize: T4 }}>
 
       {/* h1 heading */}
-      <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginBottom: '12px' }}>
+      <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginTop: '10px', marginBottom: '14px' }}>
         Any relevant photos or other files?
       </div>
 
