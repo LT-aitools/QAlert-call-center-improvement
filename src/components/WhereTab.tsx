@@ -570,6 +570,9 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
           ) : (
             <select value={streetName} onChange={e => setStreetName(e.target.value)} style={SELECT_STYLE}>
               <option value=""></option>
+              {streetName && !STREET_NAMES.includes(streetName) && (
+                <option value={streetName}>{streetName}</option>
+              )}
               {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           )}
