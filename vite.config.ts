@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/qalert-prototype-call-center/',
+  base: '/QAlert-call-center-improvement/',
 })
