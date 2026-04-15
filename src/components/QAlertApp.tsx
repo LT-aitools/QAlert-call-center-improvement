@@ -90,6 +90,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [activeTicket, setActiveTicket]     = useState<RelatedRequest | null>(null);
   const [relatedCollapsed, setRelatedCollapsed] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [missingFieldsDialogOpen, setMissingFieldsDialogOpen] = useState(false);
+  const [missingSubmitFields, setMissingSubmitFields] = useState<string[]>([]);
   const [draftToast, setDraftToast]             = useState(false);
   const [formKey, setFormKey]                   = useState(0);
   const [rowWarnTicket, setRowWarnTicket]       = useState<RelatedRequest | null>(null);
@@ -229,19 +231,29 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
 
   const isInProgress = submitter !== null || selectedType !== '' || formTab !== 'who';
   const isNewTicket = !activeTicket;
-  const canSubmit = !!(
-    formData.firstName?.trim() &&
-    formData.lastName?.trim() &&
-    notifPrefMet &&
-    selectedType &&
-    comments.trim() &&
-    selectedAddress
-  );
+  const submitMissingFields = [
+    !formData.firstName?.trim() ? 'First Name' : null,
+    !formData.lastName?.trim() ? 'Last Name' : null,
+    !notifPrefMet ? 'At least one notification preference' : null,
+    !selectedType ? 'Request Type' : null,
+    !comments.trim() ? 'Comments' : null,
+    !selectedAddress ? 'Address' : null,
+  ].filter((f): f is string => !!f);
+  const canSubmit = submitMissingFields.length === 0;
 
   function handleSubmit() {
     handleSave();
     setComments('');
     setNotifPrefMet(false);
+  }
+
+  function handleSubmitAttempt() {
+    if (canSubmit) {
+      handleSubmit();
+      return;
+    }
+    setMissingSubmitFields(submitMissingFields);
+    setMissingFieldsDialogOpen(true);
   }
   const whoIncomplete  = !(formData.firstName?.trim() && formData.lastName?.trim() && notifPrefMet);
   const whatIncomplete = !(selectedType && comments.trim());
@@ -346,7 +358,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               💾 Save Draft
             </button>
             <button
-              onClick={canSubmit ? handleSubmit : undefined}
+              onClick={handleSubmitAttempt}
               title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
@@ -356,7 +368,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 color: canSubmit ? '#fff' : '#aab',
                 border: 'none',
                 borderRight: `1px solid ${SEP_COLOR}`,
-                cursor: canSubmit ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'background 0.15s',
               }}
@@ -586,7 +598,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             {/* Step 4 (Upload Files) — no "Next", just Submit (new tickets only; existing tickets end on History) */}
             {!nextStep && isNewTicket && (
               <button
-                onClick={canSubmit ? handleSubmit : undefined}
+                onClick={handleSubmitAttempt}
                 title={canSubmit ? 'Submit this request' : 'Fill in all required fields first'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '7px',
@@ -595,7 +607,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                   color: canSubmit ? '#fff' : '#aab',
                   border: 'none', borderRadius: '4px',
                   fontSize: T2, fontWeight: 700,
-                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  cursor: 'pointer',
                 }}
               >
               <SubmitPlaneIcon size={14} />
@@ -606,7 +618,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             {/* Step 3 (Where) — show both Next and a secondary Submit */}
             {nextStep && !nextStep.disabled && formTab === 'where' && (
               <button
-                onClick={canSubmit ? handleSubmit : undefined}
+                onClick={handleSubmitAttempt}
                 title={canSubmit ? 'Skip Upload Files and submit now' : 'Fill in all required fields first'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
@@ -616,7 +628,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                   border: `1.5px solid ${canSubmit ? '#1a7a4a' : '#d0d4da'}`,
                   borderRadius: '4px',
                   fontSize: T2, fontWeight: 600,
-                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -960,6 +972,44 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 style={{ padding: '7px 20px', fontSize: T2, border: 'none', borderRadius: '3px', background: '#b91c1c', color: '#fff', cursor: 'pointer', fontWeight: 600 }}
               >
                 Yes, cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Missing required fields dialog ── */}
+      {missingFieldsDialogOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            width: '460px',
+            padding: '24px 26px 18px',
+            display: 'flex', flexDirection: 'column', gap: '12px',
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>
+              Required fields missing
+            </div>
+            <div style={{ fontSize: T2, color: '#444', lineHeight: 1.6 }}>
+              Please complete the following before submitting:
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '20px', color: '#1f2937', fontSize: T2, lineHeight: 1.7 }}>
+              {missingSubmitFields.map((field) => (
+                <li key={field}>{field}</li>
+              ))}
+            </ul>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button
+                onClick={() => setMissingFieldsDialogOpen(false)}
+                style={{ padding: '7px 20px', fontSize: T2, border: `1px solid ${SEP_COLOR}`, borderRadius: '3px', background: '#fff', color: '#444', cursor: 'pointer', fontWeight: 500 }}
+              >
+                OK
               </button>
             </div>
           </div>
