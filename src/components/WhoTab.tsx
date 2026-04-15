@@ -119,10 +119,11 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const notif = formData.notificationPrefs ?? emptyNotif;
 
   // Derived notification state
-  const textEnabled = notif.primaryText || notif.alternateText;
-  const textTarget  = notif.alternateText ? 'alternate' : 'primary';
-  const callEnabled = notif.primaryVoice || notif.alternateVoice;
-  const callTarget  = notif.alternateVoice ? 'alternate' : 'primary';
+  const textEnabled       = notif.primaryText || notif.alternateText;
+  const textTarget        = notif.alternateText ? 'alternate' : 'primary';
+  const callEnabled       = notif.primaryVoice || notif.alternateVoice;
+  const callTarget        = notif.alternateVoice ? 'alternate' : 'primary';
+  const anyNotifSelected  = notif.primaryEmail || textEnabled || callEnabled;
 
   function setTextEnabled(on: boolean) {
     if (on) setNotifNone(false);
@@ -286,11 +287,12 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
           Notification Preferences <Req />
         </div>
 
-        {/* None — explicit selection; clears all other options when checked */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
+        {/* None — explicit selection; disables and clears others when checked */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: anyNotifSelected ? 'not-allowed' : 'pointer', opacity: anyNotifSelected ? 0.4 : 1 }}>
           <input
             type="checkbox"
             checked={notifNone}
+            disabled={anyNotifSelected}
             onChange={e => {
               setNotifNone(e.target.checked);
               if (e.target.checked) {
@@ -303,16 +305,16 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
         </label>
 
         {/* Email */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
-          <input type="checkbox" checked={notif.primaryEmail} onChange={e => { if (e.target.checked) setNotifNone(false); np('primaryEmail', e.target.checked); }} style={CB} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: notifNone ? 'not-allowed' : 'pointer', opacity: notifNone ? 0.4 : 1 }}>
+          <input type="checkbox" disabled={notifNone} checked={notif.primaryEmail} onChange={e => { if (e.target.checked) setNotifNone(false); np('primaryEmail', e.target.checked); }} style={CB} />
           <span style={{ fontSize: T3, color: '#222' }}>Email</span>
           {formData.email && <span style={{ fontSize: T4, color: '#888' }}>{formData.email}</span>}
         </label>
 
         {/* Text message */}
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input type="checkbox" checked={textEnabled} onChange={e => setTextEnabled(e.target.checked)} style={CB} />
+        <div style={{ marginBottom: '12px', opacity: notifNone ? 0.4 : 1 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: notifNone ? 'not-allowed' : 'pointer' }}>
+            <input type="checkbox" disabled={notifNone} checked={textEnabled} onChange={e => setTextEnabled(e.target.checked)} style={CB} />
             <span style={{ fontSize: T3, color: '#222' }}>Text message</span>
           </label>
           {textEnabled && (
@@ -332,9 +334,9 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
         </div>
 
         {/* Phone call */}
-        <div style={{ marginBottom: '8px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <input type="checkbox" checked={callEnabled} onChange={e => setCallEnabled(e.target.checked)} style={CB} />
+        <div style={{ marginBottom: '8px', opacity: notifNone ? 0.4 : 1 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: notifNone ? 'not-allowed' : 'pointer' }}>
+            <input type="checkbox" disabled={notifNone} checked={callEnabled} onChange={e => setCallEnabled(e.target.checked)} style={CB} />
             <span style={{ fontSize: T3, color: '#222' }}>Phone call</span>
           </label>
           {callEnabled && (
