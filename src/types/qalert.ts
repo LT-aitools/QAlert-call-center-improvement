@@ -59,6 +59,8 @@ export interface RelatedRequest {
   dept?: string;
   origin?: string;
   submitterId?: string;
+  /** Public / call-center comments shown on the What tab when loading an existing ticket */
+  comments?: string;
 }
 
 export type FormTab = 'who' | 'what' | 'where' | 'more' | 'history';

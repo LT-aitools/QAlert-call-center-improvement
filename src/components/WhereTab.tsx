@@ -141,14 +141,15 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
     };
   }
   const parsed = parseAddress(initialAddress ?? '');
+  const hasSavedLocation = !!(initialAddress?.trim() && initialAddress !== 'N/A');
 
   const [city, setCity]                       = useState(parsed.city);
-  const [streetNumber, setStreetNumber]       = useState(parsed.num);
-  const [streetName, setStreetName]           = useState(parsed.name);
+  const [streetNumber, setStreetNumber]       = useState(hasSavedLocation ? parsed.num : '');
+  const [streetName, setStreetName]           = useState(hasSavedLocation ? parsed.name : '');
   const [unitNumber, setUnitNumber]           = useState('');
   const [crossStreet, setCrossStreet]         = useState('');
   const [useResidentAddress, setUseResidentAddress] = useState(false);
-  const [showManualAddress, setShowManualAddress]   = useState(false);
+  const [showManualAddress, setShowManualAddress]   = useState(hasSavedLocation);
   const [coordinates, setCoordinates]         = useState('N/A');
   const [district, setDistrict]               = useState('UNPLATTED');
   const [autoUpdate, setAutoUpdate]           = useState(true);
@@ -156,7 +157,7 @@ export function WhereTab({ onAddressChange, residentFormData, initialAddress }: 
   const [mapTypeOpen, setMapTypeOpen]         = useState(false);
   const [overlaysOpen, setOverlaysOpen]       = useState(false);
   const [activeOverlays, setActiveOverlays]   = useState<string[]>([]);
-  const [mapSearch, setMapSearch]             = useState('');
+  const [mapSearch, setMapSearch]             = useState(hasSavedLocation ? (initialAddress ?? '') : '');
   const [pinDropped, setPinDropped]           = useState(false);
   const [pinPos, setPinPos]                   = useState({ x: 50, y: 50 });
   const [isDraggingPin, setIsDraggingPin]     = useState(false);

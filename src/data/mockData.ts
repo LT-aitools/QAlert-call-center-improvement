@@ -165,7 +165,7 @@ export const mockSearchTickets: RelatedRequest[] = [
   { id: '164055', priority: 1, address: '714 NW Brisson Ave, Port St. Lucie',      lastAction: '4/9/2026 6:04P',   requestType: 'Building Permit',     submitter: 'Robert Johnson',  createdOn: '4/9/2026 6:00P',   routedTo: 'Diane Castellano',          status: 'In Progress', dept: 'Building',        origin: 'Call Center', submitterId: '8'  },
   { id: '163501', priority: 1, address: '2253 SW Mayflower Ave, Port St. Lucie',   lastAction: '4/10/2026 1:15P',  requestType: 'Street Light Outage', submitter: 'Jane Doe',        createdOn: '4/10/2026 1:10P',  routedTo: 'flora.tierman',             status: 'Open',        dept: 'Public Works',    origin: 'Call Center', submitterId: '1'  },
   { id: '164656', priority: 1, address: '4087 SE Westmoreland Blvd, Port St. Lucie', lastAction: '4/14/2026 7:22P', requestType: 'Graffiti/Vandalism', submitter: 'John Doe',       createdOn: '4/14/2026 7:18P',  routedTo: 'RLouw',                     status: 'Open',        dept: 'Code Compliance', origin: 'Online',      submitterId: '6'  },
-  { id: '163831', priority: 1, address: '639 NW Ondich Rd, Port St. Lucie',        lastAction: '4/12/2026 9:50A',  requestType: 'Canal/Waterway',      submitter: 'Mary Doe',        createdOn: '4/12/2026 9:46A',  routedTo: 'j.okafor,S Prentiss',       status: 'Open',        dept: 'Public Works',    origin: 'Call Center', submitterId: '7'  },
+  { id: '163831', priority: 1, address: '639 NW Ondich Rd, Port St. Lucie',        lastAction: '4/12/2026 9:50A',  requestType: 'Canal/Waterway',      submitter: 'Mary Doe',        createdOn: '4/12/2026 9:46A',  routedTo: 'j.okafor,S Prentiss',       status: 'Open',        dept: 'Public Works',    origin: 'Call Center', submitterId: '7',  comments: 'Resident reports slow drainage along the canal easement after heavy rain. No injuries.' },
   { id: '164106', priority: 1, address: '5530 SW Becker Rd, Port St. Lucie',       lastAction: '4/10/2026 3:33P',  requestType: 'Junk/Debris',         submitter: 'Carlos Martinez', createdOn: '4/10/2026 3:28P',  routedTo: 'BVelasquez',                status: 'In Progress', dept: 'Code Compliance', origin: 'Email',       submitterId: '12' },
   { id: '163963', priority: 1, address: '188 NW Dunbar Ave, Port St. Lucie',       lastAction: '4/12/2026 10:05A', requestType: 'Swale',               submitter: 'Jane Smith',      createdOn: '4/12/2026 10:00A', routedTo: 'r.sanchezlopez',            status: 'Open',        dept: 'Public Works',    origin: 'Call Center', submitterId: '4'  },
   { id: '163785', priority: 1, address: '2914 SW Fondura Rd, Port St. Lucie',      lastAction: '4/11/2026 8:44A',  requestType: 'Boat/RV Parking',     submitter: 'Emily Davis',     createdOn: '4/11/2026 8:40A',  routedTo: 'AFeatherstone,Marcus Webb', status: 'Open',        dept: 'Code Compliance', origin: 'Call Center', submitterId: '11' },
@@ -185,6 +185,20 @@ export const mockSearchTickets: RelatedRequest[] = [
   { id: '164816', priority: 2, address: '9140 SW Orchid Isle Dr, Port St. Lucie',  lastAction: '4/15/2026 6:55A',  requestType: 'Swale',               submitter: 'Jane Doe',        createdOn: '4/15/2026 6:50A',  routedTo: 'r.sanchezlopez',            status: 'Closed',      dept: 'Public Works',    origin: 'Online',      submitterId: '1'  },
   { id: '555555', priority: 2, address: '248 SW Glenwood Dr, Port St. Lucie',      lastAction: '4/1/2026 10:00A',  requestType: 'Pothole',             submitter: 'Jane Doe',        createdOn: '4/1/2026 9:55A',   routedTo: 'kevin.marshall',            status: 'Closed',      dept: 'Public Works',    origin: 'Call Center', submitterId: '1'  },
 ];
+
+/** Resolve a ticket by id from search DB, related list, or per-submitter buckets (for deep links / open in new tab). */
+export function findTicketById(id: string): RelatedRequest | undefined {
+  if (!id) return undefined;
+  const fromSearch = mockSearchTickets.find(t => t.id === id);
+  if (fromSearch) return fromSearch;
+  const fromRelated = mockRelatedRequests.find(t => t.id === id);
+  if (fromRelated) return fromRelated;
+  for (const rows of Object.values(mockTicketsBySubmitter)) {
+    const hit = rows.find(t => t.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
+}
 
 export const mockRequestTypes: RequestType[] = [
   { id: 'a-info',       label: 'A Info/Alerta',                          department: 'Call Center' },

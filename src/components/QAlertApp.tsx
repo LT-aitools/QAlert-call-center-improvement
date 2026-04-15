@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RefreshCwIcon } from 'lucide-react';
 import type { Submitter, RelatedRequest, FormTab } from '../types/qalert';
-import { mockTicketsBySubmitter, mockSubmitters } from '../data/mockData';
+import { mockTicketsBySubmitter, mockSubmitters, findTicketById } from '../data/mockData';
 import { WhoTab } from './WhoTab';
 import { WhatTab } from './WhatTab';
 import { WhereTab } from './WhereTab';
@@ -96,6 +96,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [notifPrefMet, setNotifPrefMet]         = useState(false);
   const [collabOpen, setCollabOpen]             = useState(false);
   const collabRef                               = useRef<HTMLDivElement>(null);
+  const openedTicketFromUrlRef                  = useRef(false);
   const [comments, setComments]                 = useState('');
 
   useEffect(() => {
@@ -148,7 +149,6 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setMainTab('details');
     setFormTab('who');
     setFormKey(k => k + 1);
-    setComments('');
     const sid = resolveSubmitterIdForTicket(ticket);
     if (sid) {
       const found = mockSubmitters.find(s => s.id === sid) ?? null;
@@ -162,7 +162,23 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     }
     setSelectedType(ticket.requestType);
     setSelectedAddress(ticket.address);
+    const commentText = ticket.comments?.trim()
+      || `Caller reported issue at ${ticket.address}. Last activity ${ticket.lastAction}. (Request #${ticket.id})`;
+    setComments(commentText);
   }
+
+  // Deep link: ?ticket=<id> opens that request (used by "Open in new tab")
+  useEffect(() => {
+    if (openedTicketFromUrlRef.current) return;
+    const id = new URLSearchParams(window.location.search).get('ticket');
+    if (!id) return;
+    openedTicketFromUrlRef.current = true;
+    const t = findTicketById(id);
+    if (t) openTicket(t);
+    const clean = new URL(window.location.href);
+    clean.searchParams.delete('ticket');
+    window.history.replaceState({}, '', clean.pathname + clean.search + clean.hash);
+  }, []);
 
   // Apply saved submitter for Save+Add (runs after savedSubmitter/savedFormData update)
   useEffect(() => {
@@ -203,8 +219,10 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setContextMenu({ x: e.clientX, y: e.clientY, ticket: r });
   }
 
-  function handleOpenInNewTab(_r: RelatedRequest) {
-    // No-op in prototype — would open ticket in a new browser tab
+  function handleOpenInNewTab(r: RelatedRequest) {
+    const u = new URL(window.location.href);
+    u.searchParams.set('ticket', r.id);
+    window.open(u.toString(), '_blank', 'noopener,noreferrer');
     setContextMenu(null);
   }
 
@@ -532,8 +550,23 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 onNotifPrefChange={setNotifPrefMet}
               />
             )}
-            {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} onCommentsChange={setComments} initialType={selectedType} />}
-            {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} residentFormData={formData} initialAddress={selectedAddress} />}
+            {formTab === 'what' && (
+              <WhatTab
+                key={`what-${formKey}`}
+                onTypeChange={setSelectedType}
+                onCommentsChange={setComments}
+                initialType={selectedType}
+                initialComments={comments}
+              />
+            )}
+            {formTab === 'where' && (
+              <WhereTab
+                key={`where-${formKey}`}
+                onAddressChange={setSelectedAddress}
+                residentFormData={formData}
+                initialAddress={selectedAddress}
+              />
+            )}
             {formTab === 'more' && <FilesTab />}
             {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && (
               <div style={{ padding: '14px', color: '#aaa', fontSize: T4 }}>
