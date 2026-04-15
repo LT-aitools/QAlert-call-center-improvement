@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type { Submitter } from '../types/qalert';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -119,12 +120,18 @@ function MapTypeItem({ label, active, onClick }: { label: string; active: boolea
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) => void } = {}) {
+interface WhereTabProps {
+  onAddressChange?: (a: string) => void;
+  residentFormData?: Partial<Submitter>;
+}
+
+export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = {}) {
   const [city, setCity]                       = useState('Port St. Lucie');
   const [streetNumber, setStreetNumber]       = useState('');
   const [streetName, setStreetName]           = useState('');
   const [unitNumber, setUnitNumber]           = useState('');
   const [crossStreet, setCrossStreet]         = useState('');
+  const [useResidentAddress, setUseResidentAddress] = useState(false);
   const [coordinates, setCoordinates]         = useState('N/A');
   const [district, setDistrict]               = useState('UNPLATTED');
   const [autoUpdate, setAutoUpdate]           = useState(true);
@@ -154,6 +161,24 @@ export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) =>
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (useResidentAddress && residentFormData) {
+      const raw = residentFormData.address?.trim() ?? '';
+      const spaceIdx = raw.indexOf(' ');
+      const num  = spaceIdx > -1 ? raw.slice(0, spaceIdx) : raw;
+      const name = spaceIdx > -1 ? raw.slice(spaceIdx + 1) : '';
+      setStreetNumber(num);
+      setStreetName(name);
+      setUnitNumber(residentFormData.unit ?? '');
+      if (residentFormData.city) setCity(residentFormData.city);
+      onAddressChange?.(raw ? `${raw}, ${residentFormData.city ?? city}` : '');
+    } else if (!useResidentAddress) {
+      setStreetNumber('');
+      setStreetName('');
+      setUnitNumber('');
+    }
+  }, [useResidentAddress]);
 
   function handleAddressSearch() {
     const mock = MOCK_LOOKUPS[streetNumber.trim()];
@@ -425,8 +450,19 @@ export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) =>
       {/* ── Right: Address form ── */}
       <div style={{ width: '205px', flexShrink: 0 }}>
 
+        {/* Resident address checkbox */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: T4, cursor: 'pointer', color: '#222', marginBottom: '8px', padding: '5px 7px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
+          <input
+            type="checkbox"
+            checked={useResidentAddress}
+            onChange={e => setUseResidentAddress(e.target.checked)}
+            style={{ accentColor: '#16a34a', width: '13px', height: '13px', cursor: 'pointer', flexShrink: 0 }}
+          />
+          <span>Add resident's address from &lsquo;Who&rsquo; tab</span>
+        </label>
+
         <FormRow label="City">
-          <select value={city} onChange={e => setCity(e.target.value)} style={SELECT_STYLE}>
+          <select value={city} onChange={e => setCity(e.target.value)} disabled={useResidentAddress} style={{ ...SELECT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}>
             <option>Port St. Lucie</option>
             <option>Fort Pierce</option>
             <option>Stuart</option>
@@ -439,15 +475,25 @@ export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) =>
             value={streetNumber}
             onChange={e => setStreetNumber(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleAddressSearch(); }}
-            style={INPUT_STYLE}
+            disabled={useResidentAddress}
+            style={{ ...INPUT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
           />
         </FormRow>
 
         <FormRow label="Street Name">
-          <select value={streetName} onChange={e => setStreetName(e.target.value)} style={SELECT_STYLE}>
-            <option value=""></option>
-            {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          {useResidentAddress ? (
+            <input
+              type="text"
+              value={streetName}
+              disabled
+              style={{ ...INPUT_STYLE, backgroundColor: '#f0f2f4', color: '#555' }}
+            />
+          ) : (
+            <select value={streetName} onChange={e => setStreetName(e.target.value)} style={SELECT_STYLE}>
+              <option value=""></option>
+              {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
         </FormRow>
 
         <FormRow label="Unit Number">
@@ -456,9 +502,10 @@ export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) =>
               type="text"
               value={unitNumber}
               onChange={e => setUnitNumber(e.target.value)}
-              style={{ ...INPUT_STYLE, flex: 1, width: 'auto' }}
+              disabled={useResidentAddress}
+              style={{ ...INPUT_STYLE, flex: 1, width: 'auto', backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
             />
-            {unitNumber && (
+            {unitNumber && !useResidentAddress && (
               <button onClick={() => setUnitNumber('')} style={{ ...FORM_BTN, padding: '2px 5px', fontSize: '9px' }}>✕</button>
             )}
           </div>
@@ -481,13 +528,6 @@ export function WhereTab({ onAddressChange }: { onAddressChange?: (a: string) =>
         <div style={{ marginBottom: '7px' }}>
           <div style={{ fontSize: T4, color: '#555', marginBottom: '1px' }}>District</div>
           <div style={{ fontSize: T4, color: '#222' }}>{district}</div>
-        </div>
-
-        <div style={{ marginBottom: '8px' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#16a34a', fontSize: T4, cursor: 'pointer', fontWeight: 500 }}>
-            <span style={{ fontSize: '13px' }}>📍</span>
-            Location Information
-          </span>
         </div>
 
         <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: T4, cursor: 'pointer', color: '#222' }}>
