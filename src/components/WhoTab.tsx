@@ -293,8 +293,11 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
       <div style={{ marginTop: '16px', borderTop: '1px solid #c8d0d8', paddingTop: '12px' }}>
-        <div style={{ fontSize: H1, fontWeight: 700, color: '#333', marginBottom: '12px' }}>
+        <div style={{ fontSize: H1, fontWeight: 700, color: '#1a3a5c', marginBottom: '6px' }}>
           Notification Preferences <Req />
+        </div>
+        <div style={{ fontSize: T3, color: '#333', marginBottom: '12px' }}>
+          How would the resident like to receive updates?
         </div>
 
         {/* None — explicit selection; disables and clears others when checked */}
