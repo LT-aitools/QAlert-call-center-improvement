@@ -283,8 +283,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             overflow: isNarrow ? 'visible' : 'hidden',
           }}>
 
-          {/* Sub-header box — dynamic when a ticket is open */}
-          <div style={{ padding: '6px 24px', flexShrink: 0 }}>
+          {/* Sub-header box — only shown for existing tickets */}
+          {!isNewTicket && <div style={{ padding: '6px 24px', flexShrink: 0 }}>
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
               width: '100%', boxSizing: 'border-box',
@@ -308,7 +308,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               <span><b>Origin:</b> {activeTicket?.origin ?? 'Call Center'}</span>
               <span><b>Dept:</b> {activeTicket?.dept ?? 'N/A'}</span>
             </div>
-          </div>
+          </div>}
 
           {/* ── Step progress bar ── */}
           <div style={{ padding: '10px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
@@ -408,10 +408,12 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '6px 18px', backgroundColor: NAV_BG, color: '#fff',
                   border: 'none', borderRadius: '3px',
-                  fontSize: T2, fontWeight: 600, cursor: 'pointer',
+                  fontSize: T2, cursor: 'pointer',
                 }}
               >
-                {nextStep.label.replace(/ \(\d+\)/g, '')} →
+                <span style={{ fontWeight: 400 }}>Next:</span>
+                <span style={{ fontWeight: 700 }}>{nextStep.label.replace(/ \(\d+\)/g, '')}</span>
+                →
               </button>
             )}
           </div>
