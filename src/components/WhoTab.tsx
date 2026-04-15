@@ -45,6 +45,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const [showDropdown, setShowDropdown]   = useState(false);
   const [isEditing, setIsEditing]         = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [notifNone, setNotifNone]         = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Derived state
@@ -118,19 +119,20 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
   const notif = formData.notificationPrefs ?? emptyNotif;
 
   // Derived notification state
-  const textEnabled  = notif.primaryText || notif.alternateText;
-  const textTarget   = notif.alternateText ? 'alternate' : 'primary';
-  const callEnabled  = notif.primaryVoice || notif.alternateVoice;
-  const callTarget   = notif.alternateVoice ? 'alternate' : 'primary';
-  const noneSelected = !notif.primaryEmail && !textEnabled && !callEnabled;
+  const textEnabled = notif.primaryText || notif.alternateText;
+  const textTarget  = notif.alternateText ? 'alternate' : 'primary';
+  const callEnabled = notif.primaryVoice || notif.alternateVoice;
+  const callTarget  = notif.alternateVoice ? 'alternate' : 'primary';
 
   function setTextEnabled(on: boolean) {
+    if (on) setNotifNone(false);
     onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryText: on, alternateText: false } });
   }
   function setTextTarget(target: 'primary' | 'alternate') {
     onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryText: target === 'primary', alternateText: target === 'alternate' } });
   }
   function setCallEnabled(on: boolean) {
+    if (on) setNotifNone(false);
     onFormDataChange({ ...formData, notificationPrefs: { ...(formData.notificationPrefs ?? emptyNotif), primaryVoice: on, alternateVoice: false } });
   }
   function setCallTarget(target: 'primary' | 'alternate') {
@@ -284,13 +286,14 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
           Notification Preferences <Req />
         </div>
 
-        {/* None — auto-checked when nothing else is selected; checking it clears all */}
+        {/* None — explicit selection; clears all other options when checked */}
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
           <input
             type="checkbox"
-            checked={noneSelected}
-            onChange={() => {
-              if (!noneSelected) {
+            checked={notifNone}
+            onChange={e => {
+              setNotifNone(e.target.checked);
+              if (e.target.checked) {
                 onFormDataChange({ ...formData, notificationPrefs: { ...emptyNotif } });
               }
             }}
@@ -301,7 +304,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
         {/* Email */}
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', cursor: 'pointer' }}>
-          <input type="checkbox" checked={notif.primaryEmail} onChange={e => np('primaryEmail', e.target.checked)} style={CB} />
+          <input type="checkbox" checked={notif.primaryEmail} onChange={e => { if (e.target.checked) setNotifNone(false); np('primaryEmail', e.target.checked); }} style={CB} />
           <span style={{ fontSize: T3, color: '#222' }}>Email</span>
           {formData.email && <span style={{ fontSize: T4, color: '#888' }}>{formData.email}</span>}
         </label>
