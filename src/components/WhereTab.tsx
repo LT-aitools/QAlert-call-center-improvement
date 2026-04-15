@@ -231,29 +231,29 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
   const mapSrc = buildMapSrc(zoom, mapCenter, mapMarker);
 
   return (
-    <div style={{ display: 'flex', padding: '10px 24px', fontSize: T4, gap: '16px' }}>
-
-      {/* ── Left: Map panel ── */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+    <div style={{ padding: '10px 24px', fontSize: T4 }}>
 
         {/* h1 heading */}
         <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginTop: '10px', marginBottom: '14px' }}>
           Where is the issue?
         </div>
 
-        {/* Resident address shortcut — above search */}
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#222', marginBottom: '8px', padding: '6px 8px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
-          <input
-            type="checkbox"
-            checked={useResidentAddress}
-            onChange={e => setUseResidentAddress(e.target.checked)}
-            style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
-          />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Use resident's address from 'Who' tab</span>
-        </label>
+        {/* Resident address shortcut + "or:" label */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#222', padding: '6px 8px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
+            <input
+              type="checkbox"
+              checked={useResidentAddress}
+              onChange={e => setUseResidentAddress(e.target.checked)}
+              style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
+            />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Use resident's address from 'Who' tab</span>
+          </label>
+          <span style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>or:</span>
+        </div>
 
         {/* Search bar + pushpin */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             {/* Search icon — left */}
             <svg style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.45 }} width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#333" strokeWidth="2">
@@ -292,10 +292,99 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
           </div>
         </div>
 
+      {/* ── Two-column row: form fields left, map right ── */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+
+        {/* ── Left: Address form ── */}
+        <div style={{ width: '210px', flexShrink: 0 }}>
+
+        <FormRow label="City">
+          <select value={city} onChange={e => setCity(e.target.value)} disabled={useResidentAddress} style={{ ...SELECT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}>
+            <option>Port St. Lucie</option>
+            <option>Fort Pierce</option>
+            <option>Stuart</option>
+          </select>
+        </FormRow>
+
+        <FormRow label="Street Number">
+          <input
+            type="text"
+            value={streetNumber}
+            onChange={e => setStreetNumber(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAddressSearch(); }}
+            disabled={useResidentAddress}
+            style={{ ...INPUT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
+          />
+        </FormRow>
+
+        <FormRow label="Street Name">
+          {useResidentAddress ? (
+            <input
+              type="text"
+              value={streetName}
+              disabled
+              style={{ ...INPUT_STYLE, backgroundColor: '#f0f2f4', color: '#555' }}
+            />
+          ) : (
+            <select value={streetName} onChange={e => setStreetName(e.target.value)} style={SELECT_STYLE}>
+              <option value=""></option>
+              {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+        </FormRow>
+
+        <FormRow label="Unit Number">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <input
+              type="text"
+              value={unitNumber}
+              onChange={e => setUnitNumber(e.target.value)}
+              disabled={useResidentAddress}
+              style={{ ...INPUT_STYLE, flex: 1, width: 'auto', backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
+            />
+            {unitNumber && !useResidentAddress && (
+              <button onClick={() => setUnitNumber('')} style={{ ...FORM_BTN, padding: '2px 5px', fontSize: '9px' }}>✕</button>
+            )}
+          </div>
+        </FormRow>
+
+        <FormRow label="Cross Street">
+          <select value={crossStreet} onChange={e => setCrossStreet(e.target.value)} style={SELECT_STYLE}>
+            <option value=""></option>
+            {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </FormRow>
+
+        <div style={{ height: '8px' }} />
+
+        <div style={{ marginBottom: '5px' }}>
+          <div style={{ fontSize: T4, color: '#555', marginBottom: '1px' }}>Coordinates</div>
+          <div style={{ fontSize: T4, color: '#222' }}>{coordinates}</div>
+        </div>
+
+        <div style={{ marginBottom: '7px' }}>
+          <div style={{ fontSize: T4, color: '#555', marginBottom: '1px' }}>District</div>
+          <div style={{ fontSize: T4, color: '#222' }}>{district}</div>
+        </div>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: T4, cursor: 'pointer', color: '#222' }}>
+          <input
+            type="checkbox"
+            checked={autoUpdate}
+            onChange={e => setAutoUpdate(e.target.checked)}
+            style={{ accentColor: '#16a34a', width: '13px', height: '13px', cursor: 'pointer' }}
+          />
+          Auto update map and form
+        </label>
+        </div>
+
+        {/* ── Right: Map ── */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
         {/* Map area */}
         <div
           ref={mapDivRef}
-          style={{ position: 'relative', width: '100%', height: '250px', border: BORDER, overflow: 'hidden', backgroundColor: '#e8e0d8' }}
+          style={{ position: 'relative', width: '100%', height: '300px', border: BORDER, overflow: 'hidden', backgroundColor: '#e8e0d8' }}
         >
           <iframe
             title="Port St. Lucie Map"
@@ -461,89 +550,8 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
             </div>
           )}
         </div>
-      </div>
-
-      {/* ── Right: Address form ── */}
-      <div style={{ width: '205px', flexShrink: 0 }}>
-
-        <FormRow label="City">
-          <select value={city} onChange={e => setCity(e.target.value)} disabled={useResidentAddress} style={{ ...SELECT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}>
-            <option>Port St. Lucie</option>
-            <option>Fort Pierce</option>
-            <option>Stuart</option>
-          </select>
-        </FormRow>
-
-        <FormRow label="Street Number">
-          <input
-            type="text"
-            value={streetNumber}
-            onChange={e => setStreetNumber(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAddressSearch(); }}
-            disabled={useResidentAddress}
-            style={{ ...INPUT_STYLE, backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
-          />
-        </FormRow>
-
-        <FormRow label="Street Name">
-          {useResidentAddress ? (
-            <input
-              type="text"
-              value={streetName}
-              disabled
-              style={{ ...INPUT_STYLE, backgroundColor: '#f0f2f4', color: '#555' }}
-            />
-          ) : (
-            <select value={streetName} onChange={e => setStreetName(e.target.value)} style={SELECT_STYLE}>
-              <option value=""></option>
-              {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-        </FormRow>
-
-        <FormRow label="Unit Number">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <input
-              type="text"
-              value={unitNumber}
-              onChange={e => setUnitNumber(e.target.value)}
-              disabled={useResidentAddress}
-              style={{ ...INPUT_STYLE, flex: 1, width: 'auto', backgroundColor: useResidentAddress ? '#f0f2f4' : '#fff', color: useResidentAddress ? '#555' : '#222' }}
-            />
-            {unitNumber && !useResidentAddress && (
-              <button onClick={() => setUnitNumber('')} style={{ ...FORM_BTN, padding: '2px 5px', fontSize: '9px' }}>✕</button>
-            )}
-          </div>
-        </FormRow>
-
-        <FormRow label="Cross Street">
-          <select value={crossStreet} onChange={e => setCrossStreet(e.target.value)} style={SELECT_STYLE}>
-            <option value=""></option>
-            {STREET_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </FormRow>
-
-        <div style={{ height: '8px' }} />
-
-        <div style={{ marginBottom: '5px' }}>
-          <div style={{ fontSize: T4, color: '#555', marginBottom: '1px' }}>Coordinates</div>
-          <div style={{ fontSize: T4, color: '#222' }}>{coordinates}</div>
         </div>
 
-        <div style={{ marginBottom: '7px' }}>
-          <div style={{ fontSize: T4, color: '#555', marginBottom: '1px' }}>District</div>
-          <div style={{ fontSize: T4, color: '#222' }}>{district}</div>
-        </div>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: T4, cursor: 'pointer', color: '#222' }}>
-          <input
-            type="checkbox"
-            checked={autoUpdate}
-            onChange={e => setAutoUpdate(e.target.checked)}
-            style={{ accentColor: '#16a34a', width: '13px', height: '13px', cursor: 'pointer' }}
-          />
-          Auto update map and form
-        </label>
       </div>
 
     </div>
