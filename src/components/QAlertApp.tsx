@@ -357,7 +357,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
           </div>}
 
           {/* ── Step progress bar ── */}
-          <div style={{ padding: '12px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
+          <div style={{ padding: '22px 24px 0', flexShrink: 0, backgroundColor: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%' }}>
               {(() => {
                 const currentIdx = formTabs.findIndex(f => f.key === formTab);
