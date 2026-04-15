@@ -218,10 +218,12 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
         >
           <img src={`${BASE}icons/add-new-request.gif`} alt="+" style={{ height: '20px' }} /> New Request
         </button>
-        <TBtn img="save.png"        label="Save"          onClick={handleSave}      disabled={!selectedType} />
-        <TBtn img="save-close.png"  label="Save + Close"  onClick={handleSaveClose}  disabled={!selectedType} />
-        <TBtn img="save-add.png"    label="Save + Add"    onClick={handleSaveAdd}    disabled={!selectedType} />
-        <TBtn img="link.gif"        label="Link Selected" disabled />
+        {!isNewTicket && <>
+          <TBtn img="save.png"        label="Save"          onClick={handleSave}      disabled={!selectedType} />
+          <TBtn img="save-close.png"  label="Save + Close"  onClick={handleSaveClose}  disabled={!selectedType} />
+          <TBtn img="save-add.png"    label="Save + Add"    onClick={handleSaveAdd}    disabled={!selectedType} />
+          <TBtn img="link.gif"        label="Link Selected" disabled />
+        </>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', height: '100%' }}>
           <TBtn img="help.png"            label="Help" />
           <TBtn img="contact-support.png" label="Contact Support" />
@@ -390,7 +392,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
               />
             )}
             {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} />}
-            {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} />}
+            {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} residentFormData={formData} />}
             {formTab === 'more' && <FilesTab />}
             {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && (
               <div style={{ padding: '14px', color: '#aaa', fontSize: T4 }}>
