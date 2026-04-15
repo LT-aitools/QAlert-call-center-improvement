@@ -273,11 +273,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 onClick={() => setCollabOpen(o => !o)}
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#444', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
-                <svg width="18" height="16" viewBox="0 0 22 18" fill="none">
-                  <circle cx="7" cy="6" r="4" fill="#3b82f6"/>
-                  <circle cx="15" cy="6" r="4" fill="#f59e0b"/>
-                  <path d="M1 17c0-3.3 2.7-6 6-6h8c3.3 0 6 2.7 6 6" stroke="#888" strokeWidth="1.5" fill="none"/>
-                </svg>
+                <img src={`${BASE}icons/handshake-collaborators.png`} alt="" style={{ height: '20px', width: '20px', objectFit: 'contain' }} />
                 Collaborators
                 <svg width="8" height="5" viewBox="0 0 8 5" fill="none" stroke="#666" strokeWidth="1.5"><polyline points="0.5,0.5 4,4.5 7.5,0.5"/></svg>
               </button>
