@@ -73,7 +73,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [selectedAddress, setSelectedAddress] = useState('');
   // Keep a snapshot of the submitter for Save+Add (same person, new ticket)
   const [savedSubmitter, setSavedSubmitter] = useState<Submitter | null>(null);
-  const [savedFormData, setSavedFormData]   = useState<Partial<Submitter>>(EMPTY_FORM);
+  const savedFormData                       = EMPTY_FORM;
   const [activeTicket, setActiveTicket]     = useState<RelatedRequest | null>(null);
   const [relatedCollapsed, setRelatedCollapsed] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -82,6 +82,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   const [rowWarnTicket, setRowWarnTicket]       = useState<RelatedRequest | null>(null);
   const [contextMenu, setContextMenu]           = useState<{ x: number; y: number; ticket: RelatedRequest } | null>(null);
   const [notifPrefMet, setNotifPrefMet]         = useState(false);
+  const [collabOpen, setCollabOpen]             = useState(false);
+  const collabRef                               = useRef<HTMLDivElement>(null);
   const [comments, setComments]                 = useState('');
 
   useEffect(() => {
@@ -93,6 +95,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+      if (collabRef.current && !collabRef.current.contains(e.target as Node)) setCollabOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -126,26 +129,7 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
     setFormTab('who');
   }
 
-  function handleSaveClose() {
-    buildRequest(); // consume the id
-    setRelatedRequests([]);
-    setFormData(EMPTY_FORM);
-    setSubmitter(null);
-    setSelectedType('');
-    setSelectedAddress('');
-    setFormTab('who');
-  }
 
-  function handleSaveAdd() {
-    const req = buildRequest();
-    // Snapshot current submitter before resetting
-    setSavedSubmitter(submitter);
-    setSavedFormData({ ...formData });
-    setRelatedRequests([req]);
-    setSelectedType('');
-    // Keep address (same person), reset to What tab
-    setFormTab('what');
-  }
 
   function openTicket(ticket: RelatedRequest) {
     setActiveTicket(ticket);
@@ -271,9 +255,47 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
         </div>
       </div>
 
-      {/* ── Toolbar — lighter bg, taller, T3 text, charcoal color ── */}
+      {/* ── Toolbar ── */}
       <div style={{ backgroundColor: TOOLBAR_BG, height: '36px', display: 'flex', alignItems: 'center', flexShrink: 0, borderBottom: GREY_LINE }}>
-        {isInProgress ? (
+        {!isNewTicket ? (
+          /* ── Existing ticket toolbar ── */
+          <>
+            <button
+              onClick={resetForm}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#333', background: 'none', border: 'none', borderRight: `1px solid ${SEP_COLOR}`, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <img src={`${BASE}icons/add-new-request.gif`} alt="+" style={{ height: '20px' }} /> New Request
+            </button>
+            <TBtn img="save.png" label="Save" onClick={handleSave} disabled={!selectedType} />
+            {/* Collaborators dropdown */}
+            <div ref={collabRef} style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center' }}>
+              <button
+                onClick={() => setCollabOpen(o => !o)}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#444', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <svg width="18" height="16" viewBox="0 0 22 18" fill="none">
+                  <circle cx="7" cy="6" r="4" fill="#3b82f6"/>
+                  <circle cx="15" cy="6" r="4" fill="#f59e0b"/>
+                  <path d="M1 17c0-3.3 2.7-6 6-6h8c3.3 0 6 2.7 6 6" stroke="#888" strokeWidth="1.5" fill="none"/>
+                </svg>
+                Collaborators
+                <svg width="8" height="5" viewBox="0 0 8 5" fill="none" stroke="#666" strokeWidth="1.5"><polyline points="0.5,0.5 4,4.5 7.5,0.5"/></svg>
+              </button>
+              {collabOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 400, backgroundColor: '#fff', border: '1px solid #c8d0d8', boxShadow: '0 3px 10px rgba(0,0,0,0.15)', minWidth: '140px', borderRadius: '3px', paddingTop: '4px', paddingBottom: '4px' }}>
+                  <button onClick={() => setCollabOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '7px 14px', fontSize: T2, color: '#222', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 700, fontSize: '16px', lineHeight: 1 }}>+</span> Add
+                  </button>
+                  <button onClick={() => setCollabOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '7px 14px', fontSize: T2, color: '#222', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '15px', lineHeight: 1 }}>✕</span> Remove
+                  </button>
+                </div>
+              )}
+            </div>
+            <TBtn img="link.gif" label="Link Selected" disabled />
+          </>
+        ) : isInProgress ? (
+          /* ── New ticket in progress ── */
           <>
             <button
               onClick={() => setCancelDialogOpen(true)}
@@ -292,7 +314,6 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 ✓ Draft saved
               </span>
             )}
-            {/* Submit Request — right-aligned in toolbar */}
             <div style={{ flex: 1 }} />
             <button
               onClick={canSubmit ? handleSubmit : undefined}
@@ -310,14 +331,12 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 transition: 'background 0.15s',
               }}
             >
-              {/* Send icon */}
-              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 10.5l15-9-5 9 5 9-15-9z"/>
-              </svg>
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5l15-9-5 9 5 9-15-9z"/></svg>
               Submit Request
             </button>
           </>
         ) : (
+          /* ── Idle (no ticket open, nothing started) ── */
           <button
             onClick={resetForm}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '100%', fontSize: T2, color: '#333', background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -325,12 +344,6 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
             <img src={`${BASE}icons/add-new-request.gif`} alt="+" style={{ height: '20px' }} /> New Request
           </button>
         )}
-        {!isNewTicket && <>
-          <TBtn img="save.png"        label="Save"          onClick={handleSave}      disabled={!selectedType} />
-          <TBtn img="save-close.png"  label="Save + Close"  onClick={handleSaveClose}  disabled={!selectedType} />
-          <TBtn img="save-add.png"    label="Save + Add"    onClick={handleSaveAdd}    disabled={!selectedType} />
-          <TBtn img="link.gif"        label="Link Selected" disabled />
-        </>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', height: '100%' }}>
           <TBtn img="help.png"            label="Help" />
           <TBtn img="contact-support.png" label="Contact Support" />
@@ -505,8 +518,8 @@ export function QAlertApp({ trainingTarget, freePanel }: QAlertAppProps) {
                 onNotifPrefChange={setNotifPrefMet}
               />
             )}
-            {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} onCommentsChange={setComments} />}
-            {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} residentFormData={formData} />}
+            {formTab === 'what' && <WhatTab onTypeChange={setSelectedType} onCommentsChange={setComments} initialType={selectedType} />}
+            {formTab === 'where' && <WhereTab onAddressChange={setSelectedAddress} residentFormData={formData} initialAddress={selectedAddress} />}
             {formTab === 'more' && <FilesTab />}
             {formTab !== 'who' && formTab !== 'what' && formTab !== 'where' && formTab !== 'more' && (
               <div style={{ padding: '14px', color: '#aaa', fontSize: T4 }}>

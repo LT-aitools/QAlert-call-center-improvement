@@ -94,8 +94,8 @@ function getPromptText(selectedType: string): string {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function WhatTab({ onTypeChange, onCommentsChange }: { onTypeChange?: (t: string) => void; onCommentsChange?: (c: string) => void } = {}) {
-  const [selectedType, setSelectedType] = useState<string>('');
+export function WhatTab({ onTypeChange, onCommentsChange, initialType }: { onTypeChange?: (t: string) => void; onCommentsChange?: (c: string) => void; initialType?: string } = {}) {
+  const [selectedType, setSelectedType] = useState<string>(initialType ?? '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
   const [hoverL1, setHoverL1]           = useState<RTNode | null>(null);

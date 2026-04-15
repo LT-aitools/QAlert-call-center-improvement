@@ -123,12 +123,28 @@ function MapTypeItem({ label, active, onClick }: { label: string; active: boolea
 interface WhereTabProps {
   onAddressChange?: (a: string) => void;
   residentFormData?: Partial<Submitter>;
+  initialAddress?: string;
 }
 
-export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = {}) {
-  const [city, setCity]                       = useState('Port St. Lucie');
-  const [streetNumber, setStreetNumber]       = useState('');
-  const [streetName, setStreetName]           = useState('');
+export function WhereTab({ onAddressChange, residentFormData, initialAddress }: WhereTabProps = {}) {
+  // Parse initialAddress e.g. "1892 SW Capehart Ave, Port St. Lucie"
+  function parseAddress(addr: string) {
+    if (!addr || addr === 'N/A') return { num: '', name: '', city: 'Port St. Lucie' };
+    const commaIdx = addr.indexOf(',');
+    const streetPart = commaIdx > -1 ? addr.slice(0, commaIdx).trim() : addr.trim();
+    const cityPart   = commaIdx > -1 ? addr.slice(commaIdx + 1).trim() : '';
+    const spaceIdx   = streetPart.indexOf(' ');
+    return {
+      num:  spaceIdx > -1 ? streetPart.slice(0, spaceIdx) : streetPart,
+      name: spaceIdx > -1 ? streetPart.slice(spaceIdx + 1) : '',
+      city: cityPart || 'Port St. Lucie',
+    };
+  }
+  const parsed = parseAddress(initialAddress ?? '');
+
+  const [city, setCity]                       = useState(parsed.city);
+  const [streetNumber, setStreetNumber]       = useState(parsed.num);
+  const [streetName, setStreetName]           = useState(parsed.name);
   const [unitNumber, setUnitNumber]           = useState('');
   const [crossStreet, setCrossStreet]         = useState('');
   const [useResidentAddress, setUseResidentAddress] = useState(false);
