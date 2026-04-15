@@ -14,6 +14,7 @@ const BASE = import.meta.env.BASE_URL;
 const BORDER        = '1px solid #c8d0d8';
 const BORDER_LOCKED = '1px solid #d8dde3';
 const H1 = '17px';
+const H2 = '15px';
 const H4 = '12px';
 const T3 = '13px'; // field labels → h3
 const T4 = H4;     // body text → h4
@@ -39,10 +40,11 @@ const emptyForm = {
 };
 
 export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChange }: WhoTabProps) {
-  const [searchQuery, setSearchQuery]   = useState('');
+  const [searchQuery, setSearchQuery]     = useState('');
   const [searchResults, setSearchResults] = useState<Submitter[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [isEditing, setIsEditing]       = useState(false);
+  const [showDropdown, setShowDropdown]   = useState(false);
+  const [isEditing, setIsEditing]         = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Derived state
@@ -102,6 +104,7 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
       setSearchResults([]);
       setShowDropdown(false);
       setIsEditing(false);
+      setShowManualEntry(false);
     }
   }
 
@@ -143,24 +146,24 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
       {/* ═══ TOP SECTION: search + name ═══ */}
       <div style={{ marginBottom: '6px' }}>
 
-          <div style={{ fontSize: T3, fontWeight: 400, color: '#333', marginBottom: '4px' }}>Find Submitter</div>
+          <div style={{ fontSize: H2, fontWeight: 600, color: '#333', marginBottom: '6px' }}>Find Submitter</div>
 
           {/* Search field */}
           <div style={{ position: 'relative' }} ref={searchRef}>
-            <div style={{ position: 'relative', display: 'inline-block', width: '340px' }}>
+            <div style={{ position: 'relative', display: 'inline-block', width: '460px' }}>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-                placeholder="Search Submitter"
-                style={{ ...BASE_INPUT, backgroundColor: '#fff', color: '#222', width: '340px', paddingRight: '22px' }}
+                placeholder="Search by name…"
+                style={{ ...BASE_INPUT, fontSize: H2, padding: '8px 32px 8px 10px', backgroundColor: '#fff', color: '#222', width: '460px' }}
               />
               <button
                 onClick={() => handleSearch(searchQuery)}
-                style={{ position: 'absolute', right: '3px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                <img src={`${BASE}icons/search.png`} alt="Search" style={{ height: '12px', opacity: 0.7 }} />
+                <img src={`${BASE}icons/search.png`} alt="Search" style={{ height: '14px', opacity: 0.6 }} />
               </button>
             </div>
 
@@ -171,16 +174,16 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
 
             {/* Dropdown */}
             {showDropdown && searchResults.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50, backgroundColor: '#fff', border: BORDER, boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: '520px', marginTop: '1px' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50, backgroundColor: '#fff', border: BORDER, boxShadow: '0 2px 6px rgba(0,0,0,0.15)', width: '560px', marginTop: '1px' }}>
                 {searchResults.map(s => {
                   const details = [s.address, s.email, s.phone].filter(Boolean).join(' · ');
                   return (
                     <div key={s.id} onClick={() => selectSubmitter(s)}
-                      style={{ padding: '4px 7px', fontSize: T4, cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', gap: '16px', alignItems: 'baseline' }}
+                      style={{ padding: '6px 10px', fontSize: T3, cursor: 'pointer', borderBottom: '1px solid #eee', display: 'flex', gap: '16px', alignItems: 'baseline' }}
                       onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#cce8f8')}
                       onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
                     >
-                      <span style={{ fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, minWidth: '130px' }}>{s.lastName}, {s.firstName}{s.mi ? ` ${s.mi}.` : ''}</span>
+                      <span style={{ fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, minWidth: '140px' }}>{s.lastName}, {s.firstName}{s.mi ? ` ${s.mi}.` : ''}</span>
                       <span style={{ color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details}</span>
                     </div>
                   );
@@ -189,76 +192,90 @@ export function WhoTab({ submitter, onSubmitterChange, formData, onFormDataChang
             )}
           </div>
 
-          {/* Name row */}
-          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={LABEL}>First Name</label>
-              <input type="text" disabled={isLocked} value={formData.firstName ?? ''} onChange={e => f('firstName', e.target.value)} placeholder="First Name" style={inp()} />
+          {/* "Add new submitter" link — shown only when no submitter selected and not in manual-entry mode */}
+          {!submitter && !showManualEntry && (
+            <button
+              onClick={() => setShowManualEntry(true)}
+              style={{ display: 'inline-block', marginTop: '8px', background: 'none', border: 'none', padding: 0, fontSize: T3, color: '#1a6fb5', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              + Add new submitter
+            </button>
+          )}
+
+          {/* Name row — shown when submitter selected OR adding new */}
+          {(!!submitter || showManualEntry) && (
+            <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={LABEL}>First Name</label>
+                <input type="text" disabled={isLocked} value={formData.firstName ?? ''} onChange={e => f('firstName', e.target.value)} placeholder="First Name" style={inp()} />
+              </div>
+              <div style={{ width: '40px' }}>
+                <label style={LABEL}>MI</label>
+                <input type="text" disabled={isLocked} value={formData.mi ?? ''} onChange={e => f('mi', e.target.value)} placeholder="MI" maxLength={1} style={inp()} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={LABEL}>Last Name</label>
+                <input type="text" disabled={isLocked} value={formData.lastName ?? ''} onChange={e => f('lastName', e.target.value)} placeholder="Last Name" style={inp()} />
+              </div>
             </div>
-            <div style={{ width: '40px' }}>
-              <label style={LABEL}>MI</label>
-              <input type="text" disabled={isLocked} value={formData.mi ?? ''} onChange={e => f('mi', e.target.value)} placeholder="MI" maxLength={1} style={inp()} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={LABEL}>Last Name</label>
-              <input type="text" disabled={isLocked} value={formData.lastName ?? ''} onChange={e => f('lastName', e.target.value)} placeholder="Last Name" style={inp()} />
-            </div>
+          )}
+      </div>
+
+      {/* ═══ DETAIL FIELDS — shown when submitter selected OR adding new ═══ */}
+      {(!!submitter || showManualEntry) && (<>
+
+        {/* Address | Email */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={LABEL}>Address</label>
+            <input type="text" disabled={isLocked} value={formData.address ?? ''} onChange={e => f('address', e.target.value)} placeholder="# Street" style={inp()} />
           </div>
-      </div>
+          <div style={{ flex: 1 }}>
+            <label style={LABEL}>Email</label>
+            <input type="email" disabled={isLocked} value={formData.email ?? ''} onChange={e => f('email', e.target.value)} placeholder="Email" style={inp()} />
+          </div>
+        </div>
 
-      {/* ═══ BOTTOM SECTION ═══ */}
+        {/* Unit | Phone | Ext */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+          <div style={{ width: '120px' }}>
+            <label style={LABEL}>Unit</label>
+            <input type="text" disabled={isLocked} value={formData.unit ?? ''} onChange={e => f('unit', e.target.value)} placeholder="Suite, Apt, D/J" style={inp()} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={LABEL}>Phone</label>
+            <input type="tel" disabled={isLocked} value={formData.phone ?? ''} onChange={e => f('phone', e.target.value)} placeholder="Phone" style={inp()} />
+          </div>
+          <div style={{ width: '48px' }}>
+            <label style={LABEL}>Ext</label>
+            <input type="text" disabled={isLocked} value={formData.phoneExt ?? ''} onChange={e => f('phoneExt', e.target.value)} placeholder="Ext" style={inp()} />
+          </div>
+        </div>
 
-      {/* Address | Email */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL}>Address</label>
-          <input type="text" disabled={isLocked} value={formData.address ?? ''} onChange={e => f('address', e.target.value)} placeholder="# Street" style={inp()} />
+        {/* City | State | Zip | Alt Phone | Ext */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={LABEL}>City</label>
+            <input type="text" disabled={isLocked} value={formData.city ?? 'Port St. Lucie'} onChange={e => f('city', e.target.value)} style={inp()} />
+          </div>
+          <div style={{ width: '38px' }}>
+            <label style={LABEL}>State</label>
+            <input type="text" disabled={isLocked} value={formData.state ?? 'FL'} onChange={e => f('state', e.target.value)} maxLength={2} style={inp()} />
+          </div>
+          <div style={{ width: '72px' }}>
+            <label style={LABEL}>Zip</label>
+            <input type="text" disabled={isLocked} value={formData.zip ?? ''} onChange={e => f('zip', e.target.value)} placeholder="Postal Code" style={inp()} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={LABEL}>Alt Phone</label>
+            <input type="tel" disabled={isLocked} value={formData.altPhone ?? ''} onChange={e => f('altPhone', e.target.value)} placeholder="Alt Phone" style={inp()} />
+          </div>
+          <div style={{ width: '48px' }}>
+            <label style={LABEL}>Ext</label>
+            <input type="text" disabled={isLocked} value={formData.altPhoneExt ?? ''} onChange={e => f('altPhoneExt', e.target.value)} placeholder="Ext" style={inp()} />
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL}>Email</label>
-          <input type="email" disabled={isLocked} value={formData.email ?? ''} onChange={e => f('email', e.target.value)} placeholder="Email" style={inp()} />
-        </div>
-      </div>
-
-      {/* Unit | Phone | Ext */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-        <div style={{ width: '120px' }}>
-          <label style={LABEL}>Unit</label>
-          <input type="text" disabled={isLocked} value={formData.unit ?? ''} onChange={e => f('unit', e.target.value)} placeholder="Suite, Apt, D/J" style={inp()} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL}>Phone</label>
-          <input type="tel" disabled={isLocked} value={formData.phone ?? ''} onChange={e => f('phone', e.target.value)} placeholder="Phone" style={inp()} />
-        </div>
-        <div style={{ width: '48px' }}>
-          <label style={LABEL}>Ext</label>
-          <input type="text" disabled={isLocked} value={formData.phoneExt ?? ''} onChange={e => f('phoneExt', e.target.value)} placeholder="Ext" style={inp()} />
-        </div>
-      </div>
-
-      {/* City | State | Zip | Alt Phone | Ext */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL}>City</label>
-          <input type="text" disabled={isLocked} value={formData.city ?? 'Port St. Lucie'} onChange={e => f('city', e.target.value)} style={inp()} />
-        </div>
-        <div style={{ width: '38px' }}>
-          <label style={LABEL}>State</label>
-          <input type="text" disabled={isLocked} value={formData.state ?? 'FL'} onChange={e => f('state', e.target.value)} maxLength={2} style={inp()} />
-        </div>
-        <div style={{ width: '72px' }}>
-          <label style={LABEL}>Zip</label>
-          <input type="text" disabled={isLocked} value={formData.zip ?? ''} onChange={e => f('zip', e.target.value)} placeholder="Postal Code" style={inp()} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL}>Alt Phone</label>
-          <input type="tel" disabled={isLocked} value={formData.altPhone ?? ''} onChange={e => f('altPhone', e.target.value)} placeholder="Alt Phone" style={inp()} />
-        </div>
-        <div style={{ width: '48px' }}>
-          <label style={LABEL}>Ext</label>
-          <input type="text" disabled={isLocked} value={formData.altPhoneExt ?? ''} onChange={e => f('altPhoneExt', e.target.value)} placeholder="Ext" style={inp()} />
-        </div>
-      </div>
+      </>)}
 
       {/* ═══ NOTIFICATION PREFERENCES ═══ */}
       <div style={{ marginTop: '16px', borderTop: '1px solid #c8d0d8', paddingTop: '12px' }}>
