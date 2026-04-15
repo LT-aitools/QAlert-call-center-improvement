@@ -1,9 +1,8 @@
-// ABOUTME: Manage & History step for submitted tickets — audit toolbar and activity table.
+// ABOUTME: History step for submitted tickets — Actions heading, audit toolbar, and activity table.
 // ABOUTME: Used only when viewing an existing request (not during new draft entry).
 
 import type { RelatedRequest, TicketHistoryRow } from '../types/qalert';
 
-const H1 = '17px';
 const H2 = '15px';
 const H3 = '13px';
 const T4 = '11px';
@@ -20,8 +19,8 @@ export function HistoryTab({ ticket, rows }: HistoryTabProps) {
 
   return (
     <div style={{ padding: '10px 24px 20px', fontSize: T4, color: '#333', backgroundColor: '#fff' }}>
-      <div style={{ fontSize: H1, fontWeight: 700, color: NAV_BG, marginBottom: '14px' }}>
-        Manage &amp; History
+      <div style={{ fontSize: H2, fontWeight: 700, color: '#111', marginBottom: '12px' }}>
+        Actions
       </div>
 
       {/* Action toolbar — Re-Route disabled per legacy app rules for closed tickets */}
@@ -133,12 +132,12 @@ export function HistoryTab({ ticket, rows }: HistoryTabProps) {
         </button>
       </div>
 
-      <div style={{ fontSize: H2, fontWeight: 700, color: '#333', marginBottom: '8px' }}>
+      <div style={{ fontSize: H2, fontWeight: 700, color: '#333', marginTop: '22px', marginBottom: '12px' }}>
         Activity history
         <span style={{ fontWeight: 400, color: '#666', marginLeft: '8px' }}>Request #{ticket.id}</span>
       </div>
 
-      <div style={{ overflow: 'auto', border: BORDER, borderRadius: '4px' }}>
+      <div style={{ overflow: 'auto', border: BORDER, borderRadius: '4px', marginTop: '4px' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: T4, backgroundColor: '#fff' }}>
           <thead>
             <tr style={{ backgroundColor: '#e8eef4', color: NAV_BG, fontWeight: 700, fontSize: H3, textAlign: 'left' }}>
