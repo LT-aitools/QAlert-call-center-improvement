@@ -43,11 +43,15 @@ export function FilesTab() {
   return (
     <div style={{ padding: '8px 16px', fontSize: T4 }}>
 
-      {/* Top row: "Request is not linked" left, "Files" center, "Add" right */}
+      {/* h1 heading */}
+      <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginBottom: '12px' }}>
+        Any relevant photos or other files?
+      </div>
+
+      {/* Top row: "Request is not linked" left, "Add" right */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: T4, color: '#666', flex: 1 }}>Request is not linked</span>
-        <span style={{ fontSize: '15px', fontWeight: 700, color: '#222', flex: 1, textAlign: 'center' }}>Files</span>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={() => fileInputRef.current?.click()}
             style={{

@@ -236,6 +236,11 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
       {/* ── Left: Map panel ── */}
       <div style={{ flex: 1, minWidth: 0 }}>
 
+        {/* h1 heading */}
+        <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a3a5c', marginBottom: '10px' }}>
+          Where is the issue?
+        </div>
+
         {/* Search bar + pushpin */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
@@ -244,7 +249,7 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
               value={mapSearch}
               onChange={e => setMapSearch(e.target.value)}
               placeholder="Search"
-              style={{ ...INPUT_STYLE, paddingRight: '28px' }}
+              style={{ ...INPUT_STYLE, fontSize: '13px', padding: '7px 32px 7px 8px' }}
             />
             <img
               src={`${BASE}icons/search.png`}
@@ -451,14 +456,14 @@ export function WhereTab({ onAddressChange, residentFormData }: WhereTabProps = 
       <div style={{ width: '205px', flexShrink: 0 }}>
 
         {/* Resident address checkbox */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: T4, cursor: 'pointer', color: '#222', marginBottom: '8px', padding: '5px 7px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#222', marginBottom: '10px', padding: '6px 8px', backgroundColor: useResidentAddress ? '#e8f4ec' : '#f5f6f7', border: '1px solid #c8d0d8', borderRadius: '3px' }}>
           <input
             type="checkbox"
             checked={useResidentAddress}
             onChange={e => setUseResidentAddress(e.target.checked)}
-            style={{ accentColor: '#16a34a', width: '13px', height: '13px', cursor: 'pointer', flexShrink: 0 }}
+            style={{ accentColor: '#16a34a', width: '14px', height: '14px', cursor: 'pointer', flexShrink: 0 }}
           />
-          <span>Add resident's address from &lsquo;Who&rsquo; tab</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#333' }}>Add resident's address from 'Who' tab</span>
         </label>
 
         <FormRow label="City">
